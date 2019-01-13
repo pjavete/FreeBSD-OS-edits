@@ -1,0 +1,11 @@
+argshell
+argshell.c
+argshell.core
+file
+foo
+lex.yy.c
+makefile
+output
+shell.l
+test
+text.txt
