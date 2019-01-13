@@ -15,8 +15,8 @@ void defaultCommand(char **args)
 	int exeNum = 0;
 
 	//creates a fork
-	pid = fork();
-	if (pid < 0)
+	
+	if ((pid = fork()) < 0)
 	{
 		//Error message if fork fails
 		perror("Error: fork did not complete");
@@ -86,9 +86,8 @@ void outputRedirect(char **args, char *file)
 	int nfd = 0;
 	int pid = 0;
 	int exeNum = 0;
-
-	pid = fork();
-	if (pid < 0)
+	
+	if ((pid = fork()) < 0)
 	{
 		//Error message if fork fails
 		perror("Error: fork failed to execute");
@@ -129,8 +128,7 @@ void outputRedirectAppend(char **args, char *file)
 	int pid = 0;
 	int exeNum = 0;
 
-	pid = fork();
-	if (pid < 0)
+	if ((pid = fork()) < 0)
 	{
 		//Error message if fork fails
 		perror("Error: fork failed to execute");
@@ -198,8 +196,7 @@ void pipeCommand(char **args, int i)
 		exit(0);
 	}
 	//create the fork
-	pid = fork();
-	if (pid < 0)
+	if ((pid = fork()) < 0)
 	{
 		//Error message if fork fails
 		perror("Error: fork failed to execute");
@@ -223,7 +220,7 @@ void pipeCommand(char **args, int i)
 				perror("Error: dup2 failed to execute");
 				exit(0);
 			}
-			exeNum = execvp(pipeArgs[0], pipeArgs);
+			exeNum = execvp(pipeArgs2[0], pipeArgs2);
 			if (exeNum < 0)
 			{
 				//error message if execvp fails to execute
@@ -242,7 +239,7 @@ void pipeCommand(char **args, int i)
 				perror("Error: dup2 failed to execute");
 				exit(0);
 			}
-			exeNum = execvp(pipeArgs2[0], pipeArgs2);
+			exeNum = execvp(pipeArgs[0], pipeArgs);
 			if (exeNum < 0)
 			{
 				//error message if execvp fails to execute
@@ -259,78 +256,28 @@ void pipeCommand(char **args, int i)
 	}
 }
 
-/*
-void standardError(char **args, char *file)
-{
-	int pipefd[2];
-	int fd = 0;
-	int nfd = 0;
-	int val = 0;
-	int pid = 0;
-	int exeNum = 0;
-
-	pid = fork();
-	if (pid < 0)
-	{
-		//Error message if fork fails
-		perror("Error: fork failed to execute");
-		exit(0);
-	}
-	else if (pid == 0)
-	{
-		//Referenced from Piazza
-		fd = creat(file, 0666);
-		nfd = dup2(fd, 1);
-		if (nfd < 0)
-		{
-			//Error message if dup2 fails
-			perror("Error: dup2 failed to execute");
-			exit(0);
-		}
-		close(fd);
-		exeNum = execvp(args[0], args);
-		if (exeNum < 0)
-		{
-			//error message if execvp fails to execute
-			perror("Error: execvp failed to execute");
-			exit(0);
-		}
-	}
-	else
-	{
-		//waits for child to finish
-		wait();
-	}
-}
-*/
-
 void changeDirectory(char **args)
 {
-	int pid = 0;
-	int pathChange = 0;
-	char *path;
-	char *buf[SIZE];
-	long size;
-
-	pid = fork();
-	if (pid < 0)
-	{
-		perror("Error: fork failed to execute");
-		exit(0);
-	}
-	else if (pid == 0)
-	{
-		path = getcwd(buf, SIZE);
-		pathChange = chdir(path);
-		if (pathChange < 0)
-		{
+	int chngeDir = 0;
+	char dir[SIZE];
+	char buf[SIZE];
+	if (args[1][0] == '/'){
+		strcpy(dir, args[1]);
+		chngeDir = chdir(dir);
+		if(chngeDir < 0){
 			perror("Error: cd failed to execute");
 			exit(0);
 		}
-	}
-	else
-	{
-		wait();
+	}else{
+		getcwd(buf, sizeof(buf));
+		strcpy(dir, buf);
+		strcat(dir, "/");
+		strcat(dir, args[1]);
+		chngeDir = chdir(dir);
+		if(chngeDir < 0){
+			perror("Error: cd failed to execute");
+			exit(0);
+		}
 	}
 }
 
@@ -388,11 +335,8 @@ int main()
 				{
 					pipeCommand(args, i);
 				}
-				else
-				{
-					defaultCommand(args);
-				}
 			}
+			defaultCommand(args);
 		}
 	}
 }

@@ -1,19 +1,25 @@
+total 210
+-rwxr-xr-x  1 chtzou  wheel    30081 Jan 13 14:18 argshell
+-rw-r--r--  1 chtzou  wheel     5885 Jan 13 14:18 argshell.c
+-rw-------  1 chtzou  wheel  4644864 Jan 13 14:18 argshell.core
+-rw-r--r--  1 chtzou  wheel        0 Jan 13 14:13 file
+-rw-r--r--  1 chtzou  wheel       90 Jan 13 08:43 foo
+-rw-------  1 chtzou  wheel  4718592 Jan 13 11:57 less.core
+-rw-r--r--  1 chtzou  wheel    45083 Jan 13 14:18 lex.yy.c
+-rw-r--r--  1 chtzou  wheel      131 Jan 12 22:28 makefile
+-rw-r--r--  1 chtzou  wheel        0 Jan 13 14:19 output
+-rw-r--r--  1 chtzou  wheel      707 Jan 12 19:24 shell.l
+drwxr-xr-x  2 chtzou  wheel        2 Jan 13 07:16 test
+-rw-r--r--  1 chtzou  wheel       13 Jan 13 06:13 text.txt
 argshell
 argshell.c
 argshell.core
 file
+foo
+less.core
 lex.yy.c
 makefile
 output
 shell.l
+test
 text.txt
-total 117
--rwxr-xr-x  1 chtzou  wheel    30108 Jan 13 07:14 argshell
--rw-r--r--  1 chtzou  wheel     7957 Jan 13 07:13 argshell.c
--rw-------  1 chtzou  wheel  4644864 Jan 13 07:14 argshell.core
--rw-r--r--  1 chtzou  wheel      484 Jan 13 04:44 file
--rw-r--r--  1 chtzou  wheel    45083 Jan 13 07:14 lex.yy.c
--rw-r--r--  1 chtzou  wheel      131 Jan 12 22:28 makefile
--rw-r--r--  1 chtzou  wheel       81 Jan 13 07:14 output
--rw-r--r--  1 chtzou  wheel      707 Jan 12 19:24 shell.l
--rw-r--r--  1 chtzou  wheel       13 Jan 13 06:13 text.txt

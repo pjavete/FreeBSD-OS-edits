@@ -1,9 +1,0 @@
-total 112
--rwxr-xr-x  1 chtzou  wheel    30108 Jan 13 04:43 argshell
--rw-r--r--  1 chtzou  wheel     6545 Jan 13 04:43 argshell.c
--rw-------  1 chtzou  wheel  4644864 Jan 13 04:43 argshell.core
--rw-r--r--  1 chtzou  wheel        0 Jan 13 04:44 file
--rw-r--r--  1 chtzou  wheel    45083 Jan 13 04:43 lex.yy.c
--rw-r--r--  1 chtzou  wheel      131 Jan 12 22:28 makefile
--rw-r--r--  1 chtzou  wheel      707 Jan 12 19:24 shell.l
--rw-r--r--  1 chtzou  wheel       13 Jan 13 00:56 text.txt
