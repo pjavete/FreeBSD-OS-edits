@@ -121,14 +121,14 @@ _Static_assert(sizeof(struct thread) + sizeof(struct td_sched) <=
  * (NHALF, x, and NHALF) handle non-interactive threads with the outer
  * ranges supporting nice values.
  */
-#define	PRI_TIMESHARE_RANGE	(PRI_MAX_TIMESHARE - PRI_MIN_TIMESHARE + 1)
-#define	PRI_INTERACT_RANGE	((PRI_TIMESHARE_RANGE - SCHED_PRI_NRESV) / 2)
-#define	PRI_BATCH_RANGE		(PRI_TIMESHARE_RANGE - PRI_INTERACT_RANGE)
+#define	PRI_TIMESHARE_RANGE	(PRI_MAX_TIMESHARE - PRI_MIN_TIMESHARE + 1) //(224 - 120 + 1) = 105
+#define	PRI_INTERACT_RANGE	((PRI_TIMESHARE_RANGE - SCHED_PRI_NRESV) / 2) //((105 - 40) / 2) = 32
+#define	PRI_BATCH_RANGE		(PRI_TIMESHARE_RANGE - PRI_INTERACT_RANGE) //(105 - 32) = 73
 
-#define	PRI_MIN_INTERACT	PRI_MIN_TIMESHARE
-#define	PRI_MAX_INTERACT	(PRI_MIN_TIMESHARE + PRI_INTERACT_RANGE - 1)
-#define	PRI_MIN_BATCH		(PRI_MIN_TIMESHARE + PRI_INTERACT_RANGE)
-#define	PRI_MAX_BATCH		PRI_MAX_TIMESHARE
+#define	PRI_MIN_INTERACT	PRI_MIN_TIMESHARE //120
+#define	PRI_MAX_INTERACT	(PRI_MIN_TIMESHARE + PRI_INTERACT_RANGE - 1) //(120 + 32 - 1) = 151
+#define	PRI_MIN_BATCH		(PRI_MIN_TIMESHARE + PRI_INTERACT_RANGE) //(120 + 32) = 152
+#define	PRI_MAX_BATCH		PRI_MAX_TIMESHARE //223
 
 /*
  * Cpu percentage computation macros and defines.
@@ -159,7 +159,7 @@ _Static_assert(sizeof(struct thread) + sizeof(struct td_sched) <=
  * PRI_TICKS:	Compute a priority in PRI_RANGE from the ticks count and total.
  * PRI_NICE:	Determines the part of the priority inherited from nice.
  */
-#define	SCHED_PRI_NRESV		(PRIO_MAX - PRIO_MIN)
+#define	SCHED_PRI_NRESV		(PRIO_MAX - PRIO_MIN) //(20 - -20) = 40
 #define	SCHED_PRI_NHALF		(SCHED_PRI_NRESV / 2)
 #define	SCHED_PRI_MIN		(PRI_MIN_BATCH + SCHED_PRI_NHALF)
 #define	SCHED_PRI_MAX		(PRI_MAX_BATCH - SCHED_PRI_NHALF)
