@@ -528,7 +528,7 @@ lotteryq_choose(struct runq *rq)
 {
 	struct rqhead *rqh;
 	struct thread *td;
-	int counter = td->td_runq->num_tickets;
+	u_long counter = rng(td->td_runq->num_tickets);
 
 	while ((pri = runq_findbit(rq)) != -1) {
 		rqh = &rq->rq_queues[pri];
@@ -550,10 +550,12 @@ lotteryq_choose(struct runq *rq)
 	return (NULL);
 }
 
-u_long
-rng(u_long maxnum)
+int
+rng(int maxnum)
 {
-	return (random() % maxnum);
+	int randnumber =  (int) random();
+	int number = randnumber % maxnum;
+	return (number);
 }
 
 /*
