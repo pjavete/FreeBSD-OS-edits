@@ -385,7 +385,7 @@ void
 lotteryq_add(struct runq *rq, struct thread *td, int flags)
 {
 	struct rqhead *rqh;
-	int pri = 0;
+	int pri = 1;
 	td->td_rqindex = pri;
 	runq_setbit(rq, pri);
 	rqh = &rq->rq_queues[pri];
