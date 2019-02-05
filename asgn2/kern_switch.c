@@ -528,6 +528,7 @@ lotteryq_choose(struct runq *rq)
 {
 	struct rqhead *rqh;
 	struct thread *td;
+	int counter = td->td_runq->num_tickets;
 
 	while ((pri = runq_findbit(rq)) != -1) {
 		rqh = &rq->rq_queues[pri];
@@ -537,11 +538,14 @@ lotteryq_choose(struct runq *rq)
 		CTR3(KTR_RUNQ,
 		    "runq_choose: pri=%d thread=%p rqh=%p", pri, td, rqh);
 		return (td); */
-		TAILQ_FOREACH() {
-			
+		TAILQ_FOREACH(td, rqh, td_runq) {
+			counter -= td->tickets;
+			if (counter <= 0){
+				return(td);
+			}
 		}
 	}
-	CTR1(KTR_RUNQ, "runq_choose: idlethread pri=%d", pri);
+	CTR1(KTR_RUNQ, "lotteryq_choose: idlethread pri=%d", pri);
 
 	return (NULL);
 }
