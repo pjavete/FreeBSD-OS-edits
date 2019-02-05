@@ -528,12 +528,13 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 		}
 		else if (pri <= PRI_MAX_BATCH)
 		{
-			tdq->lottery_queue = &tdq->tdq_timeshare;
+			ts->ts_runq = &tdq->lottery_queue;
 			//we think that the nice values range from -20 to 19
 			td->tickets = 20 - SCHED_PRI_NICE(td->td_proc->p_nice);
+			ts->ts_runq->num_tickets += td->tickets;
 			KASSERT(pri <= PRI_MAX_BATCH && pri >= PRI_MIN_BATCH,
 					("Invalid priority %d on timeshare runq", pri));
-			lotteryq_add(tdq->lottery_queue, td, flags);
+			lotteryq_add(ts->ts_runq, td, flags);
 			return;
 		}
 		else

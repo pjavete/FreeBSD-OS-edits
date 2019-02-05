@@ -385,12 +385,9 @@ void
 lotteryq_add(struct runq *rq, struct thread *td, int flags)
 {
 	struct rqhead *rqh;
-	int pri;
-	//I don't think this line is necessary
-	//RQ_PPQ = priorities per queue
-	//Or we can just initialize pri to something else?
-	pri = td->td_priority / RQ_PPQ;
+	int pri = 1;
 	td->td_rqindex = pri;
+	//we can probably remove since we only deal with lottery queue
 	runq_setbit(rq, pri);
 	rqh = &rq->rq_queues[pri];
 	CTR4(KTR_RUNQ, "runq_add: td=%p pri=%d %d rqh=%p",
