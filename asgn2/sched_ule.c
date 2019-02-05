@@ -64,8 +64,6 @@ __FBSDID("$FreeBSD: releng/11.2/sys/kern/sched_ule.c 331541 2018-03-26 04:41:23Z
 #include <sys/cpuset.h>
 #include <sys/sbuf.h>
 
-#include <sys/libkern/random.c>
-
 #ifdef HWPMC_HOOKS
 #include <sys/pmckern.h>
 #endif
@@ -1464,12 +1462,6 @@ tdq_choose(struct tdq *tdq)
 	}
 
 	return (NULL);
-}
-
-static unsigned int
-rng(int maxnum)
-{
-	return (unsigned int)(random() % maxnum);
 }
 
 /*
