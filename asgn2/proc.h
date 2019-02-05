@@ -351,7 +351,7 @@ struct thread {
 	siginfo_t	td_si;		/* (c) For debugger or core file */
 	void		*td_lkpi_task;	/* LinuxKPI task struct pointer */
 	size_t		td_vslock_sz;	/* (k) amount of vslock-ed space */
-	uint32_t tickets; /*number of tickets for each thread*/
+	uint64_t tickets; /*number of tickets for each thread*/
 };
 
 struct thread0_storage {
