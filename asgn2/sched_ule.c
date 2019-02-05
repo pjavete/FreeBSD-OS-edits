@@ -1449,6 +1449,9 @@ tdq_choose(struct tdq *tdq)
 				 td->td_priority));
 		return (td);
 	}
+	td = lotteryq_choose(&tdq->tdq_lottery_queue);
+	if (td != NULL)
+		return (td);
 	td = runq_choose(&tdq->tdq_idle);
 	if (td != NULL)
 	{
