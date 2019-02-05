@@ -528,7 +528,7 @@ lotteryq_choose(struct runq *rq)
 {
 	struct rqhead *rqh;
 	struct thread *td;
-	u_long counter = rng(td->td_runq->num_tickets);
+	int counter = rng(td->td_runq->num_tickets);
 
 	while ((pri = runq_findbit(rq)) != -1) {
 		rqh = &rq->rq_queues[pri];
