@@ -386,20 +386,15 @@ lotteryq_add(struct runq *rq, struct thread *td, int flags)
 {
 	struct rqhead *rqh;
 	int pri;
-
+	//I don't think this line is necessary
+	//RQ_PPQ = priorities per queue
+	//Or we can just initialize pri to something else?
 	pri = td->td_priority / RQ_PPQ;
 	td->td_rqindex = pri;
 	runq_setbit(rq, pri);
 	rqh = &rq->rq_queues[pri];
 	CTR4(KTR_RUNQ, "runq_add: td=%p pri=%d %d rqh=%p",
 	    td, td->td_priority, pri, rqh);
-	/*
-	if (flags & SRQ_PREEMPTED) {
-		TAILQ_INSERT_HEAD(rqh, td, td_runq);
-	} else {
-		TAILQ_INSERT_TAIL(rqh, td, td_runq);
-	}
-	*/
 	TAILQ_INSERT_TAIL(rqh, td, td_runq);
 }
 

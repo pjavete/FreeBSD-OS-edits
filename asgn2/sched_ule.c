@@ -529,22 +529,10 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 		else if (pri <= PRI_MAX_BATCH)
 		{
 			tdq->lottery_queue = &tdq->tdq_timeshare;
-			td->tickets = PRI_MAX_BATCH - SCHED_PRI_NICE(td->td_proc->p_nice);
+			//we think that the nice values range from -20 to 19
+			td->tickets = 20 - SCHED_PRI_NICE(td->td_proc->p_nice);
 			KASSERT(pri <= PRI_MAX_BATCH && pri >= PRI_MIN_BATCH,
 					("Invalid priority %d on timeshare runq", pri));
-			/*
-			if ((flags & (SRQ_BORROWING | SRQ_PREEMPTED)) == 0)
-			{
-				pri = RQ_NQS * (pri - PRI_MIN_BATCH) / PRI_BATCH_RANGE;
-				pri = (pri + tdq->tdq_idx) % RQ_NQS;
-				if (tdq->tdq_ridx != tdq->tdq_idx &&
-					pri == tdq->tdq_ridx)
-					pri = (unsigned char)(pri - 1) % RQ_NQS;
-			}
-			else
-				pri = tdq->tdq_ridx;
-			runq_add_pri(ts->ts_runq, td, pri, flags);
-			*/
 			lotteryq_add(tdq->lottery_queue, td, flags);
 			return;
 		}
@@ -1490,6 +1478,7 @@ tdq_setup(struct tdq *tdq)
 	runq_init(&tdq->tdq_realtime);
 	runq_init(&tdq->tdq_timeshare);
 	runq_init(&tdq->tdq_idle);
+	runq_init(&tdq->lottery_queue);
 	snprintf(tdq->tdq_name, sizeof(tdq->tdq_name),
 			 "sched lock %d", (int)TDQ_ID(tdq));
 	mtx_init(&tdq->tdq_lock, tdq->tdq_name, "sched lock",
