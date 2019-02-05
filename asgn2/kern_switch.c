@@ -523,6 +523,25 @@ runq_choose_from(struct runq *rq, u_char idx)
 
 	return (NULL);
 }
+
+struct thread *
+lotteryq_choose(struct runq *lq)
+{
+	struct rqhead *rqh;
+	struct thread *td;
+
+	while ((pri = runq_findbit(rq)) != -1) {
+		rqh = &rq->rq_queues[pri];
+		td = TAILQ_FIRST(rqh);
+		KASSERT(td != NULL, ("runq_choose: no thread on busy queue"));
+		CTR3(KTR_RUNQ,
+		    "runq_choose: pri=%d thread=%p rqh=%p", pri, td, rqh);
+		return (td);
+	}
+	CTR1(KTR_RUNQ, "runq_choose: idlethread pri=%d", pri);
+
+	return (NULL);
+}
 /*
  * Remove the thread from the queue specified by its priority, and clear the
  * corresponding status bit if the queue becomes empty.
