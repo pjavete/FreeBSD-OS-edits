@@ -45,6 +45,8 @@ __FBSDID("$FreeBSD: releng/11.2/sys/kern/kern_switch.c 327481 2018-01-02 00:14:4
 
 #include <machine/cpu.h>
 
+#include <sys/libkern/random.c>
+
 /* Uncomment this to enable logging of critical_enter/exit. */
 #if 0
 #define	KTR_CRITICAL	KTR_SCHED
@@ -522,23 +524,34 @@ runq_choose_from(struct runq *rq, u_char idx)
 }
 
 struct thread *
-lotteryq_choose(struct runq *lq)
+lotteryq_choose(struct runq *rq)
 {
 	struct rqhead *rqh;
 	struct thread *td;
 
 	while ((pri = runq_findbit(rq)) != -1) {
 		rqh = &rq->rq_queues[pri];
+		/*
 		td = TAILQ_FIRST(rqh);
 		KASSERT(td != NULL, ("runq_choose: no thread on busy queue"));
 		CTR3(KTR_RUNQ,
 		    "runq_choose: pri=%d thread=%p rqh=%p", pri, td, rqh);
-		return (td);
+		return (td); */
+		TAILQ_FOREACH() {
+			
+		}
 	}
 	CTR1(KTR_RUNQ, "runq_choose: idlethread pri=%d", pri);
 
 	return (NULL);
 }
+
+u_long
+rng(u_long maxnum)
+{
+	return (random() % maxnum);
+}
+
 /*
  * Remove the thread from the queue specified by its priority, and clear the
  * corresponding status bit if the queue becomes empty.
