@@ -1484,7 +1484,7 @@ tdq_setup(struct tdq *tdq)
 	runq_init(&tdq->tdq_realtime);
 	runq_init(&tdq->tdq_timeshare);
 	runq_init(&tdq->tdq_idle);
-	runq_init(&tdq->lottery_queue);
+	lotteryq_init(&tdq->lottery_queue);
 	snprintf(tdq->tdq_name, sizeof(tdq->tdq_name),
 			 "sched lock %d", (int)TDQ_ID(tdq));
 	mtx_init(&tdq->tdq_lock, tdq->tdq_name, "sched lock",

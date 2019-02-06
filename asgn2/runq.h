@@ -73,9 +73,10 @@ int	runq_check(struct runq *);
 struct	thread *runq_choose(struct runq *);
 struct	thread *runq_choose_from(struct runq *, u_char);
 struct	thread *runq_choose_fuzz(struct runq *, int);
-struct  thread *lotteryq_choose(struct runq *, int);
+struct  thread *lotteryq_choose(struct runq *);
 uint64_t rng(uint64_t);
 void	runq_init(struct runq *);
+void 	lotteryq_init(struct runq *);
 void	runq_remove(struct runq *, struct thread *);
 void	runq_remove_idx(struct runq *, struct thread *, u_char *);
 

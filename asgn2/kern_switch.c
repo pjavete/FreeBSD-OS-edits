@@ -275,6 +275,7 @@ void
 lotteryq_init(struct runq *rq)
 {
 	int i;
+	rq->num_tickets = 0;
 	rq->total_proc = 0;
 	rq->max_tickets = 0;
 	rq->min_tickets = 41;
@@ -558,14 +559,14 @@ lotteryq_choose(struct runq *rq)
 					rq->max_tickets = 0;
 					TAILQ_FOREACH(td, rqh, td_runq){
 						if(td->tickets > rq->max_tickets)
-							rq->max_tickets = td_>tickets;
+							rq->max_tickets = td->tickets;
 					}
 				}
 				if (td->tickets == rq->min_tickets){
 					rq->min_tickets = 41;
 					TAILQ_FOREACH(td, rqh, td_runq){
 						if(td->tickets < rq->min_tickets)
-							rq->min_tickets = td_>tickets;
+							rq->min_tickets = td->tickets;
 					}
 				}
 				return(td);
