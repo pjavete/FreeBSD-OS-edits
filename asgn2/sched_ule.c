@@ -40,7 +40,8 @@ __FBSDID("$FreeBSD: releng/11.2/sys/kern/sched_ule.c 331541 2018-03-26 04:41:23Z
 
 #include "opt_hwpmc_hooks.h"
 #include "opt_sched.h"
-#include <unistd.h>
+#include <kern/kern_prot.c>
+#include <sys/unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,7 +473,8 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 	pri = td->td_priority;
 	ts = td_get_sched(td);
 	TD_SET_RUNQ(td);
-	if (getuid() == 0)
+	sys_getuid(td, 0);
+	if (td->td_retval[0] == 0)
 	{
 		if (THREAD_CAN_MIGRATE(td))
 		{
@@ -1484,7 +1486,7 @@ tdq_setup(struct tdq *tdq)
 	runq_init(&tdq->tdq_realtime);
 	runq_init(&tdq->tdq_timeshare);
 	runq_init(&tdq->tdq_idle);
-	runq_init(&tdq->lottery_queue);
+	lotteryq_init(&tdq->lottery_queue);
 	snprintf(tdq->tdq_name, sizeof(tdq->tdq_name),
 			 "sched lock %d", (int)TDQ_ID(tdq));
 	mtx_init(&tdq->tdq_lock, tdq->tdq_name, "sched lock",
