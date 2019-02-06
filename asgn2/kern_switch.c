@@ -542,6 +542,20 @@ lotteryq_choose(struct runq *rq)
 		TAILQ_FOREACH(td, rqh, td_runq) {
 			counter -= td->tickets;
 			if (counter <= 0){
+				if (td->tickets == rq->max_tickets){
+					rq->max_tickets = 0;
+					TAILQ_FOREACH(td, rqh, td_runq){
+						if(td->tickets > rq->max_tickets)
+							rq->max_tickets = td_>tickets;
+					}
+				}
+				if (td->tickets == rq->min_tickets){
+					rq->min_tickets = 41;
+					TAILQ_FOREACH(td, rqh, td_runq){
+						if(td->tickets < rq->min_tickets)
+							rq->min_tickets = td_>tickets;
+					}
+				}
 				return(td);
 			}
 		}
