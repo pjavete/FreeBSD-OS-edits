@@ -271,6 +271,18 @@ runq_init(struct runq *rq)
 		TAILQ_INIT(&rq->rq_queues[i]);
 }
 
+void
+lotteryq_init(struct runq *rq)
+{
+	int i;
+	rq->total_proc = 0;
+	rq->max_tickets = 0;
+	rq->min_tickets = 41;
+	bzero(rq, sizeof *rq);
+	for (i = 0; i < RQ_NQS; i++)
+		TAILQ_INIT(&rq->rq_queues[i]);
+}
+
 /*
  * Clear the status bit of the queue corresponding to priority level pri,
  * indicating that it is empty.
