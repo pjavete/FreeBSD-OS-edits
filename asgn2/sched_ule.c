@@ -1458,8 +1458,8 @@ tdq_choose(struct tdq *tdq)
 	td = lotteryq_choose(&tdq->lottery_queue);
 	if (td != NULL)
 	{
-		tdq->lottery_queue->num_tickets -= td->tickets;
-		tdq->lottery_queue->total_proc -= 1;
+		tdq->lottery_queue.num_tickets -= td->tickets;
+		tdq->lottery_queue.total_proc -= 1;
 		return (td);
 	}
 	td = runq_choose(&tdq->tdq_idle);
