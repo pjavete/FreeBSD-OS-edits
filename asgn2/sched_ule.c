@@ -1447,11 +1447,10 @@ tdq_choose(struct tdq *tdq)
 				 td->td_priority));
 		return (td);
 	}
-	int total_tickets = &tdq->lottery_queue->num_tickets;
-	td = lotteryq_choose(&tdq->tdq_lottery_queue, total_tickets);
+	td = lotteryq_choose(&tdq->lottery_queue);
 	if (td != NULL)
 	{
-		&tdq->lottery_queue->num_tickets -= td->tickets;
+		tdq->lottery_queue->num_tickets -= td->tickets;
 		return (td);
 	}
 	td = runq_choose(&tdq->tdq_idle);
