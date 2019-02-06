@@ -40,7 +40,8 @@ __FBSDID("$FreeBSD: releng/11.2/sys/kern/sched_ule.c 331541 2018-03-26 04:41:23Z
 
 #include "opt_hwpmc_hooks.h"
 #include "opt_sched.h"
-
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kdb.h>
