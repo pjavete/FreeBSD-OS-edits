@@ -61,9 +61,9 @@ struct runq {
 	struct	rqbits rq_status;
 	struct	rqhead rq_queues[RQ_NQS];
 	uint64_t num_tickets;
-	int 	total_proc = 0;
-	uint64_t max_tickets = 0;
-	uint64_t min_tickets = 41;
+	int 	total_proc;
+	uint64_t max_tickets;
+	uint64_t min_tickets;
 };
 
 void	runq_add(struct runq *, struct thread *, int);
