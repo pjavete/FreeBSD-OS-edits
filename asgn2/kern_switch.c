@@ -45,8 +45,6 @@ __FBSDID("$FreeBSD: releng/11.2/sys/kern/kern_switch.c 327481 2018-01-02 00:14:4
 
 #include <machine/cpu.h>
 
-#include <libkern/random.c>
-
 /* Uncomment this to enable logging of critical_enter/exit. */
 #if 0
 #define	KTR_CRITICAL	KTR_SCHED
