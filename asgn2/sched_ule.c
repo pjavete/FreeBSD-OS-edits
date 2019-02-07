@@ -473,61 +473,18 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 	ts = td_get_sched(td);
 	TD_SET_RUNQ(td);
 	sys_getuid(td, 0);
-	if (td->td_retval[0] == 0)
+	if (THREAD_CAN_MIGRATE(td))
 	{
-		if (THREAD_CAN_MIGRATE(td))
-		{
-			tdq->tdq_transferable++;
-			ts->ts_flags |= TSF_XFERABLE;
-		}
-		if (pri < PRI_MIN_BATCH)
-		{
-			ts->ts_runq = &tdq->tdq_realtime;
-		}
-		else if (pri <= PRI_MAX_BATCH)
-		{
-			ts->ts_runq = &tdq->tdq_timeshare;
-			KASSERT(pri <= PRI_MAX_BATCH && pri >= PRI_MIN_BATCH,
-					("Invalid priority %d on timeshare runq", pri));
-			/*
-		 * This queue contains only priorities between MIN and MAX
-		 * realtime.  Use the whole queue to represent these values.
-		 */
-			if ((flags & (SRQ_BORROWING | SRQ_PREEMPTED)) == 0)
-			{
-				pri = RQ_NQS * (pri - PRI_MIN_BATCH) / PRI_BATCH_RANGE;
-				pri = (pri + tdq->tdq_idx) % RQ_NQS;
-				/*
-			 * This effectively shortens the queue by one so we
-			 * can have a one slot difference between idx and
-			 * ridx while we wait for threads to drain.
-			 */
-				if (tdq->tdq_ridx != tdq->tdq_idx &&
-					pri == tdq->tdq_ridx)
-					pri = (unsigned char)(pri - 1) % RQ_NQS;
-			}
-			else
-				pri = tdq->tdq_ridx;
-			runq_add_pri(ts->ts_runq, td, pri, flags);
-			return;
-		}
-		else
-			ts->ts_runq = &tdq->tdq_idle;
-		runq_add(ts->ts_runq, td, flags);
+		tdq->tdq_transferable++;
+		ts->ts_flags |= TSF_XFERABLE;
 	}
-	else
+	if (pri < PRI_MIN_BATCH)
 	{
-		if (THREAD_CAN_MIGRATE(td))
-		{
-			tdq->tdq_transferable++;
-			ts->ts_flags |= TSF_XFERABLE;
-		}
-		if (pri < PRI_MIN_BATCH)
-		{
-			ts->ts_runq = &tdq->tdq_realtime;
-		}
-		else if (pri <= PRI_MAX_BATCH)
-		{
+	ts->ts_runq = &tdq->tdq_realtime;
+	}
+	else if (pri <= PRI_MAX_BATCH)
+	{
+		if (td->td_retval[0] == 0){
 			ts->ts_runq = &tdq->lottery_queue;
 			//we think that the nice values range from -20 to 19
 			td->tickets = 20 + SCHED_PRI_NICE(td->td_proc->p_nice);
@@ -538,14 +495,39 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 			ts->ts_runq->total_proc += 1;
 			ts->ts_runq->num_tickets += td->tickets;
 			KASSERT(pri <= PRI_MAX_BATCH && pri >= PRI_MIN_BATCH,
-					("Invalid priority %d on timeshare runq", pri));
+				("Invalid priority %d on timeshare runq", pri));
 			lotteryq_add(ts->ts_runq, td, flags);
 			return;
+		} else {
+			ts->ts_runq = &tdq->tdq_timeshare;
+			KASSERT(pri <= PRI_MAX_BATCH && pri >= PRI_MIN_BATCH,
+				("Invalid priority %d on timeshare runq", pri));
+				/*
+			 * This queue contains only priorities between MIN and MAX
+			 * realtime.  Use the whole queue to represent these values.
+			 */
+			 if ((flags & (SRQ_BORROWING | SRQ_PREEMPTED)) == 0)
+			 {
+			 	pri = RQ_NQS * (pri - PRI_MIN_BATCH) / PRI_BATCH_RANGE;
+			 	pri = (pri + tdq->tdq_idx) % RQ_NQS;
+					/*
+				 * This effectively shortens the queue by one so we
+				 * can have a one slot difference between idx and
+				 * ridx while we wait for threads to drain.
+				 */
+				 if (tdq->tdq_ridx != tdq->tdq_idx &&
+				 	pri == tdq->tdq_ridx)
+				 	pri = (unsigned char)(pri - 1) % RQ_NQS;
+				}
+				else
+					pri = tdq->tdq_ridx;
+				runq_add_pri(ts->ts_runq, td, pri, flags);
+				return;
 		}
-		else
-			ts->ts_runq = &tdq->tdq_idle;
-		runq_add(ts->ts_runq, td, flags);
 	}
+	else
+		ts->ts_runq = &tdq->tdq_idle;
+	runq_add(ts->ts_runq, td, flags);
 }
 
 /* 

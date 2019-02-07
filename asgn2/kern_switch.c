@@ -541,7 +541,8 @@ lotteryq_choose(struct runq *rq)
 	struct rqhead *rqh;
 	struct thread *td;
 	uint64_t counter = rng(rq->num_tickets);
-	rqh = &rq->rq_queues[1];
+	int pri = 1;
+	rqh = &rq->rq_queues[pri];
 
 	TAILQ_FOREACH(td, rqh, td_runq) {
 		counter -= td->tickets;
