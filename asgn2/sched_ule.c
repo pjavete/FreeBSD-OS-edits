@@ -485,20 +485,6 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 	else if (pri <= PRI_MAX_BATCH)
 	{
 		if (td->td_retval[0] == 0){
-			ts->ts_runq = &tdq->lottery_queue;
-			//we think that the nice values range from -20 to 19
-			td->tickets = 20 + SCHED_PRI_NICE(td->td_proc->p_nice);
-			if(td->tickets > ts->ts_runq->max_tickets)
-				ts->ts_runq->max_tickets = td->tickets;
-			if(td->tickets < ts->ts_runq->min_tickets)
-				ts->ts_runq->min_tickets = td->tickets;
-			ts->ts_runq->total_proc += 1;
-			ts->ts_runq->num_tickets += td->tickets;
-			KASSERT(pri <= PRI_MAX_BATCH && pri >= PRI_MIN_BATCH,
-				("Invalid priority %d on timeshare runq", pri));
-			lotteryq_add(ts->ts_runq, td, flags);
-			return;
-		} else {
 			ts->ts_runq = &tdq->tdq_timeshare;
 			KASSERT(pri <= PRI_MAX_BATCH && pri >= PRI_MIN_BATCH,
 				("Invalid priority %d on timeshare runq", pri));
@@ -523,6 +509,20 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 					pri = tdq->tdq_ridx;
 				runq_add_pri(ts->ts_runq, td, pri, flags);
 				return;
+		} else {			
+			ts->ts_runq = &tdq->lottery_queue;
+			//we think that the nice values range from -20 to 19
+			td->tickets = 20 + SCHED_PRI_NICE(td->td_proc->p_nice);
+			if(td->tickets > ts->ts_runq->max_tickets)
+				ts->ts_runq->max_tickets = td->tickets;
+			if(td->tickets < ts->ts_runq->min_tickets)
+				ts->ts_runq->min_tickets = td->tickets;
+			ts->ts_runq->total_proc += 1;
+			ts->ts_runq->num_tickets += td->tickets;
+			KASSERT(pri <= PRI_MAX_BATCH && pri >= PRI_MIN_BATCH,
+				("Invalid priority %d on timeshare runq", pri));
+			lotteryq_add(ts->ts_runq, td, flags);
+			return;
 		}
 	}
 	else
