@@ -530,7 +530,7 @@ tdq_runq_add(struct tdq *tdq, struct thread *td, int flags)
 		{
 			ts->ts_runq = &tdq->lottery_queue;
 			//we think that the nice values range from -20 to 19
-			td->tickets = 20 - SCHED_PRI_NICE(td->td_proc->p_nice);
+			td->tickets = 20 + SCHED_PRI_NICE(td->td_proc->p_nice);
 			if(td->tickets > ts->ts_runq->max_tickets)
 				ts->ts_runq->max_tickets = td->tickets;
 			if(td->tickets < ts->ts_runq->min_tickets)

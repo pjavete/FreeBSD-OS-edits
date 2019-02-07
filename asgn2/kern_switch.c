@@ -39,6 +39,7 @@ __FBSDID("$FreeBSD: releng/11.2/sys/kern/kern_switch.c 327481 2018-01-02 00:14:4
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/random.h>
 #include <sys/sched.h>
 #include <sys/smp.h>
 #include <sys/sysctl.h>
@@ -540,36 +541,27 @@ lotteryq_choose(struct runq *rq)
 	struct rqhead *rqh;
 	struct thread *td;
 	uint64_t counter = rng(rq->num_tickets);
-	int pri;
+	rqh = &rq->rq_queues[1];
 
-	while ((pri = runq_findbit(rq)) != -1) {
-		rqh = &rq->rq_queues[pri];
-		/*
-		td = TAILQ_FIRST(rqh);
-		KASSERT(td != NULL, ("runq_choose: no thread on busy queue"));
-		CTR3(KTR_RUNQ,
-		    "runq_choose: pri=%d thread=%p rqh=%p", pri, td, rqh);
-		return (td); */
-		TAILQ_FOREACH(td, rqh, td_runq) {
-			counter -= td->tickets;
-			if (counter <= 0){
-				if (td->tickets == rq->max_tickets){
-					rq->max_tickets = 0;
-					TAILQ_FOREACH(td, rqh, td_runq){
-						if(td->tickets > rq->max_tickets)
-							rq->max_tickets = td->tickets;
-					}
+	TAILQ_FOREACH(td, rqh, td_runq) {
+		counter -= td->tickets;
+		if (counter <= 0){
+			if (td->tickets == rq->max_tickets){
+				rq->max_tickets = 0;
+				TAILQ_FOREACH(td, rqh, td_runq){
+					if(td->tickets > rq->max_tickets)
+						rq->max_tickets = td->tickets;
 				}
-				if (td->tickets == rq->min_tickets){
-					rq->min_tickets = 41;
-					TAILQ_FOREACH(td, rqh, td_runq){
-						if(td->tickets < rq->min_tickets)
-							rq->min_tickets = td->tickets;
-					}
-				}
-				return(td);
 			}
-		}
+			if (td->tickets == rq->min_tickets){
+				rq->min_tickets = 41;
+				TAILQ_FOREACH(td, rqh, td_runq){
+					if(td->tickets < rq->min_tickets)
+						rq->min_tickets = td->tickets;
+				}
+			}
+			return(td);
+		}		
 	}
 	CTR1(KTR_RUNQ, "lotteryq_choose: idlethread pri=%d", pri);
 
