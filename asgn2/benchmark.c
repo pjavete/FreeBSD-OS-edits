@@ -5,6 +5,11 @@
 
 int main(int argc, char *argv[]){
 
+    if (argv[1] == NULL){
+        printf("Usage: benchmark <nice>");
+        exit(0);
+    }
+
     int nice = atoi(argv[1]);
     if (nice >= -20 && nice <= 19){
         setpriority(PRIO_PROCESS, 0, nice);
