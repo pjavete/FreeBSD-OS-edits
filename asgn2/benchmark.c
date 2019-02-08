@@ -1,30 +1,17 @@
-void benchmark1(){
-    int pid;
-    pid = fork();
-    if(pid < 0){
-        perror("Error: fork did not complete");
-		exit(0);
-    }else if(pid == 0){
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/resource.h>
+#include <sys/types.h>
 
-    }else{
-        wait();
+int main(int argc, char *argv[]){
+
+    int nice = atoi(argv[1]);
+    if (nice >= -20 && nice <= 19){
+        setpriority(PRIO_PROCESS, 0, nice);
     }
-}
-//we can have it write to file
-void benchmark2(){
-    int pid;
-    pid = fork();
-    if(pid < 0){
-        perror("Error: fork did not complete");
-		exit(0);
-    }else if(pid == 0){
-
-    }else{
-        wait();
+    
+    for(int i = 0; i < 1000000; i++){
+        // :)
     }
-}
 
-int main(){
-    benchmark1();
-    benchmark2();
 }
