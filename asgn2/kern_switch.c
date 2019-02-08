@@ -274,10 +274,12 @@ void
 lotteryq_init(struct runq *rq)
 {
 	int i;
+
 	rq->num_tickets = 0;
 	rq->total_proc = 0;
 	rq->max_tickets = 0;
-	rq->min_tickets = 41;
+	rq->min_tickets = 0;
+
 	bzero(rq, sizeof *rq);
 	for (i = 0; i < RQ_NQS; i++)
 		TAILQ_INIT(&rq->rq_queues[i]);
@@ -396,25 +398,29 @@ runq_add(struct runq *rq, struct thread *td, int flags)
 }
 
 void
-lotteryq_add(struct runq *rq, struct thread *td, int flags)
-{
-	struct rqhead *rqh;
-	int pri = 1;
-	td->td_rqindex = pri;
-	//we can probably remove since we only deal with lottery queue
-	runq_setbit(rq, pri);
-	rqh = &rq->rq_queues[pri];
-	CTR4(KTR_RUNQ, "runq_add: td=%p pri=%d %d rqh=%p",
-	    td, td->td_priority, pri, rqh);
-	TAILQ_INSERT_TAIL(rqh, td, td_runq);
-}
-
-void
 runq_add_pri(struct runq *rq, struct thread *td, u_char pri, int flags)
 {
 	struct rqhead *rqh;
 
 	KASSERT(pri < RQ_NQS, ("runq_add_pri: %d out of range", pri));
+	td->td_rqindex = pri;
+	runq_setbit(rq, pri);
+	rqh = &rq->rq_queues[pri];
+	CTR4(KTR_RUNQ, "runq_add_pri: td=%p pri=%d idx=%d rqh=%p",
+	    td, td->td_priority, pri, rqh);
+	if (flags & SRQ_PREEMPTED) {
+		TAILQ_INSERT_HEAD(rqh, td, td_runq);
+	} else {
+		TAILQ_INSERT_TAIL(rqh, td, td_runq);
+	}
+}
+
+void
+lotteryq_add(struct runq *rq, struct thread *td, int flags)
+{
+	struct rqhead *rqh;
+	int pri = 0;
+
 	td->td_rqindex = pri;
 	runq_setbit(rq, pri);
 	rqh = &rq->rq_queues[pri];
@@ -540,31 +546,44 @@ lotteryq_choose(struct runq *rq)
 {
 	struct rqhead *rqh;
 	struct thread *td;
-	uint64_t counter = rng(rq->num_tickets);
-	int pri = 1;
-	rqh = &rq->rq_queues[pri];
+	int pri = 0;
 
-	TAILQ_FOREACH(td, rqh, td_runq) {
-		counter -= td->tickets;
-		if (counter <= 0){
-			if (td->tickets == rq->max_tickets){
-				rq->max_tickets = 0;
-				TAILQ_FOREACH(td, rqh, td_runq){
-					if(td->tickets > rq->max_tickets)
-						rq->max_tickets = td->tickets;
-				}
-			}
-			if (td->tickets == rq->min_tickets){
-				rq->min_tickets = 41;
-				TAILQ_FOREACH(td, rqh, td_runq){
-					if(td->tickets < rq->min_tickets)
-						rq->min_tickets = td->tickets;
-				}
-			}
-			return(td);
-		}		
+	if (rq->total_proc != 0) {
+		rqh = &rq->rq_queues[pri];
+		uint64_t winner = rng(rq->num_tickets);
+		// if(winner > rq->num_tickets){
+		// 	printf("Generated number outside range");
+		// 	winner = 1;
+		// }
+		uint64_t counter = 0;
+		TAILQ_FOREACH(td, rqh, td_runq) {
+			printf("Entered TAILQ_FOREACH loop");
+			counter += td->td_tickets;
+			printf("Counter: %lu", counter);
+			printf("Winner: %lu", winner);
+			if (counter >= winner){
+				// if (td->td_tickets == rq->max_tickets){
+				// 	rq->max_tickets = 0;
+				// 	TAILQ_FOREACH(td, rqh, td_runq){
+				// 		if(td->td_tickets > rq->max_tickets)
+				// 			rq->max_tickets = td->td_tickets;
+				// 	}
+				// }
+				// if (td->td_tickets == rq->min_tickets){
+				// 	rq->min_tickets = 0;
+				// 	TAILQ_FOREACH(td, rqh, td_runq){
+				// 		if(td->td_tickets < rq->min_tickets)
+				// 			rq->min_tickets = td->td_tickets;
+				// 	}
+				// }
+				rq->total_proc -= 1;
+				rq->num_tickets -= td->td_tickets;
+				printf("We chose a thread from lottery_queue");
+				return(td);
+			}		
+		}
 	}
-	CTR1(KTR_RUNQ, "lotteryq_choose: idlethread pri=%d", pri);
+	CTR1(KTR_RUNQ, "runq_choose_from: idlethread pri=%d", pri);
 
 	return (NULL);
 }
@@ -576,7 +595,6 @@ rng(uint64_t maxnum)
 	uint64_t number = (randnumber % maxnum)+1;
 	return (number);
 }
-
 /*
  * Remove the thread from the queue specified by its priority, and clear the
  * corresponding status bit if the queue becomes empty.

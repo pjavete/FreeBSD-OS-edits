@@ -295,7 +295,6 @@ struct thread {
 	u_char		td_rqindex;	/* (t) Run queue index. */
 	u_char		td_base_pri;	/* (t) Thread base kernel priority. */
 	u_char		td_priority;	/* (t) Thread active priority. */
-	uint64_t tickets; /*number of tickets for each thread*/
 	u_char		td_pri_class;	/* (t) Scheduling class. */
 	u_char		td_user_pri;	/* (t) User pri from estcpu and nice. */
 	u_char		td_base_user_pri; /* (t) Base user pri */
@@ -352,6 +351,7 @@ struct thread {
 	siginfo_t	td_si;		/* (c) For debugger or core file */
 	void		*td_lkpi_task;	/* LinuxKPI task struct pointer */
 	size_t		td_vslock_sz;	/* (k) amount of vslock-ed space */
+	uint64_t	td_tickets;
 };
 
 struct thread0_storage {

@@ -61,14 +61,14 @@ struct runq {
 	struct	rqbits rq_status;
 	struct	rqhead rq_queues[RQ_NQS];
 	uint64_t num_tickets;
-	int 	total_proc;
+	int 	 total_proc;
 	uint64_t max_tickets;
 	uint64_t min_tickets;
 };
 
 void	runq_add(struct runq *, struct thread *, int);
-void	lotteryq_add(struct runq *, struct thread *, int);
 void	runq_add_pri(struct runq *, struct thread *, u_char, int);
+void	lotteryq_add(struct runq *, struct thread *, int);
 int	runq_check(struct runq *);
 struct	thread *runq_choose(struct runq *);
 struct	thread *runq_choose_from(struct runq *, u_char);
@@ -76,7 +76,7 @@ struct	thread *runq_choose_fuzz(struct runq *, int);
 struct  thread *lotteryq_choose(struct runq *);
 uint64_t rng(uint64_t);
 void	runq_init(struct runq *);
-void 	lotteryq_init(struct runq *);
+void	lotteryq_init(struct runq *);
 void	runq_remove(struct runq *, struct thread *);
 void	runq_remove_idx(struct runq *, struct thread *, u_char *);
 
