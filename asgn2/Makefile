@@ -1,10 +1,10 @@
 all: benchmark
 
 benchmark: benchmark.o
-	gcc -Wall -std=c99 -o benchmark benchmark.c
+	cc -Wall -std=c99 -o benchmark benchmark.c
 
 benchmark.o: benchmark.c
-	gcc -Wall -std=c99 -c benchmark.c
+	cc -Wall -std=c99 -c benchmark.c
 
 clean:
 	rm benchmark benchmark.o
