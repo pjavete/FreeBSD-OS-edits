@@ -15,13 +15,13 @@ int main() {
     struct intq q;
     TAILQ_INIT(&q);
 
-    struct str data[5] = {str(1), str(2), str(3), str(4), str(5)}
+    struct str data[5] = {str(1), str(2), str(3), str(4), str(5)};
 
     for (int i = 0; i < 5; i++) {
         TAILQ_INSERT_HEAD(&q, data[i], tailq);
     }
 
-    struct str *p
+    struct str *p;
     TAILQ_FOREACH(p, &q, tailq) {
         printf("%d\n", p->n);
     }
