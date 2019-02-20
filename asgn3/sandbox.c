@@ -6,7 +6,7 @@
 struct str {
     TAILQ_ENTRY(str) tailq;
     int n;
-}
+};
 
 int main {
 
@@ -26,4 +26,5 @@ int main {
         printf("%d\n", p->n);
     }
 
+    return(0);
 }
