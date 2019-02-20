@@ -8,7 +8,7 @@ struct str {
     int n;
 };
 
-int main {
+int main() {
 
     TAILQ_HEAD(intq, int);
 
