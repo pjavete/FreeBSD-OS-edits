@@ -10,9 +10,9 @@ struct str {
 
 int main() {
 
-    TAILQ_HEAD(intq, int);
+    TAILQ_HEAD(strq, str);
 
-    struct intq q;
+    struct strq q;
     TAILQ_INIT(&q);
 
     struct str data[5] = {str(1), str(2), str(3), str(4), str(5)};
