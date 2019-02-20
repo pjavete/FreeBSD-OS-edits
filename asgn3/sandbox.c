@@ -19,7 +19,7 @@ int main() {
 
     for (int i = 0; i < 5; i++) {
         data[i].n = i;
-        TAILQ_INSERT_HEAD(&q, data[i], tailq);
+        TAILQ_INSERT_HEAD(&q, &data[i], tailq);
     }
 
     struct str *p;
