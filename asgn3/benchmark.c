@@ -2,7 +2,7 @@
 
 int main() {
 
-    while(1) {
+    for(int i = 0; i < 1000000; i++) {
         void *m = malloc(1024*1024);
         memset(m,0,1024*1024);
     }
