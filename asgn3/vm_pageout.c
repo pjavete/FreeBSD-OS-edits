@@ -1136,6 +1136,15 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		if(printpage->timestamp_sec == 0){
 			printf("The oldest page has time 0\n");
 		}
+		if(printpage->wire_count != 0){
+			printf("The oldest page is wired\n");
+		}
+		if(printpage->hold_count != 0){
+			printf("The oldest page has holds\n");
+		}
+		if(vm_page_sbusied(printpage)){
+			printf("The oldest page is busy\n");
+		}
 		diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
 		printf("Oldest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
 		
