@@ -438,10 +438,9 @@ vm_page_init_page(vm_page_t m, vm_paddr_t pa, int segind)
 	m->order = VM_NFREEORDER;
 	m->pool = VM_FREEPOOL_DEFAULT;
 	m->valid = m->dirty = 0;
-	struct timespec current;
-	getnanotime(&current);
-	m->timestamp_sec = current.tv_sec;
-	m->timestamp_nsec = current.tv_nsec;
+	time_t current;
+	current = time(NULL);
+	m->timestamp_sec = current;
 	pmap_page_init(m);
 }
 
@@ -2800,10 +2799,6 @@ vm_page_activate(vm_page_t m)
 
 	vm_page_lock_assert(m, MA_OWNED);
 	if ((queue = m->queue) != PQ_ACTIVE) {
-		struct timespec add;
-		getnanotime(&add);
-		m->timestamp_sec = add.tv_sec;
-		m->timestamp_nsec = add.tv_nsec;
 		if (m->wire_count == 0 && (m->oflags & VPO_UNMANAGED) == 0) {
 			if (m->act_count < ACT_INIT)
 				m->act_count = ACT_INIT;

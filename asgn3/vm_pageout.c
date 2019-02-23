@@ -1125,10 +1125,10 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	if(page_shortage > 0){
 		/*Print statistics */
 		int total_count = 0;
-		uint64_t diff;
+		time_t diff;
 		vm_page_t printpage;
-		struct timespec current;
-		getnanotime(&current);
+		time_t current;
+		current = time(NULL);
 
 		pq = &vmd->vmd_pagequeues[PQ_INACTIVE];
 		total_count += pq->pq_cnt;
@@ -1145,14 +1145,14 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		if(vm_page_sbusied(printpage)){
 			printf("The oldest page is busy\n");
 		}
-		diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
-		printf("Oldest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
+		diff = current - printpage->timestamp_sec); 
+		printf("Oldest page in FIFO queue is %ld seconds old\n", diff);
 		
 		pq = &vmd->vmd_pagequeues[PQ_ACTIVE];
 		total_count += pq->pq_cnt;
 		printpage = TAILQ_LAST(&pq->pq_pl, pglist);
-		diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
-		printf("Youngest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
+		diff = current.tv_sec - printpage->timestamp_sec; 
+		printf("Youngest page in FIFO queue is %ld seconds old\n", diff);
 
 		printf("There are %d pages in the FIFO queue\n", total_count);
 	}
