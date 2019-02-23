@@ -112,8 +112,6 @@ __FBSDID("$FreeBSD: releng/11.2/sys/vm/vm_pageout.c 331722 2018-03-29 02:50:57Z 
 #include <vm/vm_extern.h>
 #include <vm/uma.h>
 
-#include <time.h>
-
 /*
  * System initialization
  */

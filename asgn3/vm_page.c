@@ -119,7 +119,6 @@ __FBSDID("$FreeBSD: releng/11.2/sys/vm/vm_page.c 332935 2018-04-24 14:35:39Z mar
 #include <vm/uma.h>
 #include <vm/uma_int.h>
 
-#include <time.h>
 #include <sys/time.h>
 
 #include <machine/md_var.h>
