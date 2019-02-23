@@ -441,7 +441,7 @@ vm_page_init_page(vm_page_t m, vm_paddr_t pa, int segind)
 	struct timespec current;
 	getnanotime(&current);
 	m->timestamp_sec = current.tv_sec;
-	m->timestamp_nsec = current.tv_nsec;
+	//m->timestamp_nsec = current.tv_nsec;
 	pmap_page_init(m);
 }
 
@@ -2802,8 +2802,43 @@ vm_page_activate(vm_page_t m)
 	if ((queue = m->queue) != PQ_ACTIVE) {
 		struct timespec add;
 		getnanotime(&add);
-		m->timestamp_sec = add.tv_sec;
-		m->timestamp_nsec = add.tv_nsec;
+		//Printing Statistics
+		//m->timestamp_sec = add.tv_sec;
+		//m->timestamp_nsec = add.tv_nsec;
+		int total_count = 0;
+		uint64_t diff;
+		vm_page_t printpage;
+		struct timespec current;
+		getnanotime(&current);
+
+		pq = &vmd->vmd_pagequeues[PQ_INACTIVE];
+		total_count += pq->pq_cnt;
+		printpage = TAILQ_FIRST(&pq->pq_pl);
+		if(printpage->timestamp_sec == 0){
+			printf("The oldest page has time 0\n");
+		}
+		if(printpage->wire_count != 0){
+			printf("The oldest page is wired\n");
+		}
+		if(printpage->hold_count != 0){
+			printf("The oldest page has holds\n");
+		}
+		if(vm_page_sbusied(printpage)){
+			printf("The oldest page is busy\n");
+		}
+		//diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
+		diff = (current.tv_sec - printpage->timestamp_sec);
+		printf("Oldest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
+		
+		pq = &vmd->vmd_pagequeues[PQ_ACTIVE];
+		total_count += pq->pq_cnt;
+		printpage = TAILQ_LAST(&pq->pq_pl, pglist);
+		//diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
+		diff = BILLION * (current.tv_sec - printpage->timestamp_sec); 
+		printf("Youngest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
+
+		printf("There are %d pages in the FIFO queue\n", total_count);
+		//Print Statistics end
 		if (m->wire_count == 0 && (m->oflags & VPO_UNMANAGED) == 0) {
 			if (m->act_count < ACT_INIT)
 				m->act_count = ACT_INIT;
