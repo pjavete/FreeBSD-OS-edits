@@ -1145,7 +1145,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		if(vm_page_sbusied(printpage)){
 			printf("The oldest page is busy\n");
 		}
-		diff = current.tv_sec - printpage->timestamp_sec); 
+		diff = current.tv_sec - printpage->timestamp_sec; 
 		printf("Oldest page in FIFO queue is %ld seconds old\n", diff);
 		
 		pq = &vmd->vmd_pagequeues[PQ_ACTIVE];
