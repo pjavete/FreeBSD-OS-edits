@@ -1127,8 +1127,8 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		int total_count = 0;
 		time_t diff;
 		vm_page_t printpage;
-		time_t current;
-		current = time(NULL);
+		struct timeval current;
+		gettimeofday(&current, NULL);
 
 		pq = &vmd->vmd_pagequeues[PQ_INACTIVE];
 		total_count += pq->pq_cnt;
@@ -1145,7 +1145,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		if(vm_page_sbusied(printpage)){
 			printf("The oldest page is busy\n");
 		}
-		diff = current - printpage->timestamp_sec); 
+		diff = current.tv_sec - printpage->timestamp_sec); 
 		printf("Oldest page in FIFO queue is %ld seconds old\n", diff);
 		
 		pq = &vmd->vmd_pagequeues[PQ_ACTIVE];
