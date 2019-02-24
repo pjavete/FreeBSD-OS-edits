@@ -1128,7 +1128,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		time_t diff;
 		vm_page_t printpage;
 		struct timeval current;
-		gettimeofday(&current, NULL);
+		getmicrotime(&current);
 
 		pq = &vmd->vmd_pagequeues[PQ_INACTIVE];
 		total_count += pq->pq_cnt;
