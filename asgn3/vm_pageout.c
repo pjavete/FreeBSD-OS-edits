@@ -1127,7 +1127,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		int total_count = 0;
 		time_t diff;
 		vm_page_t printpage;
-		struct timeval current;
+		struct timespec current;
 		getnanotime(&current);
 
 		pq = &vmd->vmd_pagequeues[PQ_INACTIVE];
