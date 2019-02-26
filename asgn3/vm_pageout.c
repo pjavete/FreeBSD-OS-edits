@@ -1138,6 +1138,16 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	struct timespec current;
 	getnanotime(&current);
 
+	pq = &vmd->vmd_pagequeues[PQ_ACTIVE];
+	total_count += pq->pq_cnt;
+	printpage = TAILQ_LAST(&pq->pq_pl, pglist);
+	while((printpage->flags & PG_MARKER) &&
+		(TAILQ_PREV(printpage, pglist, plinks.q) != NULL)){
+		printpage = TAILQ_PREV(printpage, pglist, plinks.q);
+	}
+	diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
+	log(1, "Youngest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
+
 	pq = &vmd->vmd_pagequeues[PQ_INACTIVE];
 	total_count += pq->pq_cnt;
 	printpage = TAILQ_FIRST(&pq->pq_pl);
@@ -1163,16 +1173,6 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
 	log(1, "Oldest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
 	
-	pq = &vmd->vmd_pagequeues[PQ_ACTIVE];
-	total_count += pq->pq_cnt;
-	printpage = TAILQ_LAST(&pq->pq_pl, pglist);
-	while((printpage->flags & PG_MARKER) &&
-		(TAILQ_PREV(printpage, pglist, plinks.q) != NULL)){
-		printpage = TAILQ_PREV(printpage, pglist, plinks.q);
-	}
-	diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
-	log(1, "Youngest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
-
 	log(1, "There are %d pages in the FIFO queue\n", total_count);
 
 	/*
