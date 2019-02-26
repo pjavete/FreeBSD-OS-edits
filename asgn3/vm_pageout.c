@@ -1132,7 +1132,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 
 
 	// Print statistics
-	printf("vm_pageout_update_period = %d\n", vm_pageout_update_period);
+	log(1, "----------------------------------------------------------------------------------------\n");
 	int total_count = 0;
 	uint64_t diff;
 	vm_page_t printpage;
@@ -1414,7 +1414,6 @@ free_page:
 		min_scan = pq->pq_cnt;
 		min_scan *= scan_tick - vmd->vmd_last_active_scan;
 		min_scan /= hz * vm_pageout_update_period;
-		printf("This is inside the if update period != 0\n");
 	} else
 		min_scan = 0;
 	if (min_scan > 0 || (inactq_shortage > 0 && maxscan > 0))
