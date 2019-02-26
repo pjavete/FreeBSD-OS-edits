@@ -23,3 +23,5 @@ move:
 	cp vm_page.c /sys/vm/
 	cp vm_pageout.c /sys/vm/
 	cp vm_page.h /sys/vm/
+	cp syslog.conf /etc
+	cp asgn3_stats.log /var/log

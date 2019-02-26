@@ -1145,7 +1145,7 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		(TAILQ_NEXT(printpage, plinks.q) != NULL)){
 		printpage = TAILQ_NEXT(printpage, plinks.q);
 	}
-	if(printpage->timestamp_sec == 0){
+	/*if(printpage->timestamp_sec == 0){
 		printf("The oldest page has time 0\n");
 	}
 	if(printpage->wire_count != 0){
@@ -1159,9 +1159,9 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	}
 	if(printpage->flags & PG_MARKER){
 		printf("The oldest page is the marker page\n");
-	}
+	}*/
 	diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
-	printf("Oldest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
+	log(1, "Oldest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
 	
 	pq = &vmd->vmd_pagequeues[PQ_ACTIVE];
 	total_count += pq->pq_cnt;
@@ -1171,9 +1171,9 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 		printpage = TAILQ_PREV(printpage, pglist, plinks.q);
 	}
 	diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
-	printf("Youngest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
+	log(1, "Youngest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
 
-	printf("There are %d pages in the FIFO queue\n", total_count);
+	log(1, "There are %d pages in the FIFO queue\n", total_count);
 
 	/*
 	 * Start scanning the inactive queue for pages that we can free.  The
