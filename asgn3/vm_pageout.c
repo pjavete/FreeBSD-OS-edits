@@ -176,7 +176,7 @@ SYSCTL_INT(_vm, OID_AUTO, pageout_wakeup_thresh,
 	CTLFLAG_RWTUN, &vm_pageout_wakeup_thresh, 0,
 	"free page threshold for waking up the pageout daemon");
 
-SYSCTL_INT(_vm, OID_AUTO, 30, //pageout_update_period
+SYSCTL_INT(_vm, OID_AUTO, pageout_update_period,
 	CTLFLAG_RWTUN, &vm_pageout_update_period, 0,
 	"Maximum active LRU update period");
   
@@ -1141,7 +1141,8 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	pq = &vmd->vmd_pagequeues[PQ_INACTIVE];
 	total_count += pq->pq_cnt;
 	printpage = TAILQ_FIRST(&pq->pq_pl);
-	while(printpage->flags & PG_MARKER){
+	while((printpage->flags & PG_MARKER) && 
+		(TAILQ_NEXT(printpage, plinks.q) != NULL)){
 		printpage = TAILQ_NEXT(printpage, plinks.q);
 	}
 	if(printpage->timestamp_sec == 0){
@@ -1165,7 +1166,8 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	pq = &vmd->vmd_pagequeues[PQ_ACTIVE];
 	total_count += pq->pq_cnt;
 	printpage = TAILQ_LAST(&pq->pq_pl, pglist);
-	while(printpage->flags & PG_MARKER){
+	while((printpage->flags & PG_MARKER) &&
+		(TAILQ_PREV(printpage, pglist, plinks.q) != NULL)){
 		printpage = TAILQ_PREV(printpage, pglist, plinks.q);
 	}
 	diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 

@@ -441,6 +441,10 @@ vm_page_init_page(vm_page_t m, vm_paddr_t pa, int segind)
 	m->order = VM_NFREEORDER;
 	m->pool = VM_FREEPOOL_DEFAULT;
 	m->valid = m->dirty = 0;
+	// struct timespec current;
+	// getnanotime(&current);
+	// m->timestamp_sec = current.tv_sec;
+	// m->timestamp_nsec = current.tv_nsec;
 	pmap_page_init(m);
 }
 
