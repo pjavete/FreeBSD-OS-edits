@@ -6,6 +6,8 @@ Files included:
 vm_page.c
 vm_page.h
 vm_pageout.c
+syslog.conf
+asgn3_stats.log
 Makefile
 README.txt
 design_document.txt
