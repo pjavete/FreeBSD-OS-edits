@@ -9,6 +9,8 @@
 */
 
 #define FUSE_USE_VERSION 26
+#define NUM_BLOCKS 100
+#define MAX_BLOCKS 1023
 
 #include <fuse.h>
 #include <stdio.h>
@@ -18,6 +20,8 @@
 
 static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
+
+static int[NUM_BLOCKS] bitmap;
 
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
@@ -94,5 +98,10 @@ static struct fuse_operations hello_oper = {
 
 int main(int argc, char *argv[])
 {
+	if (NUM_BLOCKS > MAX_BLOCKS) {
+		perror("NUM_BLOCKS exceeds maximum allowed amount of blocks");
+		exit(1);
+	}
+	bitmap[0] = 0;
 	return fuse_main(argc, argv, &hello_oper, NULL);
 }
