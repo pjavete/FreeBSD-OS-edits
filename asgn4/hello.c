@@ -97,22 +97,22 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 
 	return size;
 }
-int hello_write(const char *, const char *, size_t, off_t, struct fuse_file_info *)
+int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	printf("write\n");
-	return 0
+	return 0;
 }
 
-int hello_unlink(const char *)
+int hello_unlink(const char *path)
 {
 	printf("unlink\n");
-	return 0
+	return 0;
 }
 
-int hello_create(const char *, mode_t, struct fuse_file_info *)
+int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
 	printf("create\n");
-	return 0
+	return 0;
 }
 
 static struct fuse_operations hello_oper = {
