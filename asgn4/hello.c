@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 	int fd;
 	char *fs = "./FILE_FS";
 	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
-	ftruncate(fd, )
+	ftruncate(fd, BLOCK_SIZE*NUM_BLOCKS);
 	if (NUM_BLOCKS > MAX_BLOCKS) {
 		perror("NUM_BLOCKS exceeds maximum allowed amount of blocks");
 		exit(1);
