@@ -104,14 +104,14 @@ static struct fuse_operations hello_oper = {
 
 int main(int argc, char *argv[])
 {
-	int fd;
-	char *fs = "./FILE_FS";
-	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
-	ftruncate(fd, )
 	if (NUM_BLOCKS > MAX_BLOCKS) {
 		perror("NUM_BLOCKS exceeds maximum allowed amount of blocks");
 		exit(1);
 	}
 	bitmap[0] = 1;
+	int fd;
+	char *fs = "./FILE_FS";
+	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
+	ftruncate(fd, )
 	return fuse_main(argc, argv, &hello_oper, NULL);
 }
