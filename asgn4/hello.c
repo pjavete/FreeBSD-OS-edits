@@ -10,6 +10,8 @@
 
 #define FUSE_USE_VERSION 26
 #define BLOCK_SIZE 4096
+#define NUM_BLOCKS 100
+#define MAX_BLOCKS 1023
 
 #include <fuse.h>
 #include <stdio.h>
@@ -19,6 +21,8 @@
 
 static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
+
+static int[NUM_BLOCKS] bitmap;
 
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
@@ -58,6 +62,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int hello_open(const char *path, struct fuse_file_info *fi)
 {
+	printf("open\n");
 	if (strcmp(path, hello_path) != 0)
 		return -ENOENT;
 
@@ -70,6 +75,7 @@ static int hello_open(const char *path, struct fuse_file_info *fi)
 static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 		      struct fuse_file_info *fi)
 {
+	printf("read\n");
 	size_t len;
 	(void) fi;
 	if(strcmp(path, hello_path) != 0)
@@ -102,5 +108,10 @@ int main(int argc, char *argv[])
 	char *fs = "./FILE_FS";
 	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
 	ftruncate(fd, )
+	if (NUM_BLOCKS > MAX_BLOCKS) {
+		perror("NUM_BLOCKS exceeds maximum allowed amount of blocks");
+		exit(1);
+	}
+	bitmap[0] = 1;
 	return fuse_main(argc, argv, &hello_oper, NULL);
 }
