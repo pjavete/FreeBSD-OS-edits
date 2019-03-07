@@ -92,7 +92,7 @@ static struct fuse_operations hello_oper = {
 	.read		= hello_read,
 	.unlink		= hello_unlink,
 	.write		= hello_write,
-
+	.create		= hello_create,
 };
 
 int main(int argc, char *argv[])
