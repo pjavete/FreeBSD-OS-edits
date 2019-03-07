@@ -102,6 +102,6 @@ int main(int argc, char *argv[])
 		perror("NUM_BLOCKS exceeds maximum allowed amount of blocks");
 		exit(1);
 	}
-	bitmap[0] = 0;
+	bitmap[0] = 1;
 	return fuse_main(argc, argv, &hello_oper, NULL);
 }
