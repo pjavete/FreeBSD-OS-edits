@@ -9,6 +9,7 @@
 */
 
 #define FUSE_USE_VERSION 26
+#define BLOCK_SIZE 4096
 #define NUM_BLOCKS 100
 #define MAX_BLOCKS 1023
 
@@ -26,7 +27,9 @@ static int[NUM_BLOCKS] bitmap;
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
 	int res = 0;
-
+	stbuf -> st_birthtim = time(NULL); //creation time
+	stbuf -> st_atime = time(NULL); //access time
+	stbuf -> st_mtime = time(NULL); //modification time
 	memset(stbuf, 0, sizeof(struct stat));
 	if (strcmp(path, "/") == 0) {
 		stbuf->st_mode = S_IFDIR | 0755;
@@ -50,7 +53,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	if (strcmp(path, "/") != 0)
 		return -ENOENT;
 
-	filler(buf, ".", NULL, 0);
+	//filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
 	filler(buf, hello_path + 1, NULL, 0);
 
@@ -94,10 +97,17 @@ static struct fuse_operations hello_oper = {
 	.readdir	= hello_readdir,
 	.open		= hello_open,
 	.read		= hello_read,
+	.unlink		= hello_unlink,
+	.write		= hello_write,
+	.create		= hello_create,
 };
 
 int main(int argc, char *argv[])
 {
+	int fd;
+	char *fs = "./FILE_FS";
+	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
+	ftruncate(fd, )
 	if (NUM_BLOCKS > MAX_BLOCKS) {
 		perror("NUM_BLOCKS exceeds maximum allowed amount of blocks");
 		exit(1);
