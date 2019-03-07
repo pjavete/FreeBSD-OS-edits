@@ -22,14 +22,14 @@
 static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
 
-static int[NUM_BLOCKS] bitmap;
+static int bitmap[NUM_BLOCKS];
 
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
 	int res = 0;
-	stbuf->st_birthtim = time(NULL); //creation time
-	stbuf->st_atime = time(NULL);	//access time
-	stbuf->st_mtime = time(NULL);	//modification time
+	//stbuf->st_birthtim = time(NULL); //creation time
+	//stbuf->st_atime = time(NULL);	//access time
+	//stbuf->st_mtime = time(NULL);	//modification time
 	memset(stbuf, 0, sizeof(struct stat));
 	if (strcmp(path, "/") == 0)
 	{
@@ -99,14 +99,20 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 }
 int hello_write(const char *, const char *, size_t, off_t, struct fuse_file_info *)
 {
+	printf("write\n");
+	return 0
 }
 
 int hello_unlink(const char *)
 {
+	printf("unlink\n");
+	return 0
 }
 
 int hello_create(const char *, mode_t, struct fuse_file_info *)
 {
+	printf("create\n");
+	return 0
 }
 
 static struct fuse_operations hello_oper = {
