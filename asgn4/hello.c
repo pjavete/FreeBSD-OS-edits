@@ -136,5 +136,6 @@ int main(int argc, char *argv[])
 	int fd;
 	char *fs = "./FILE_FS";
 	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
-	ftruncate(fd, BLOCK_SIZE * NUM_BLOCKS) return fuse_main(argc, argv, &hello_oper, NULL);
+	ftruncate(fd, BLOCK_SIZE * NUM_BLOCKS);
+	return fuse_main(argc, argv, &hello_oper, NULL);
 }
