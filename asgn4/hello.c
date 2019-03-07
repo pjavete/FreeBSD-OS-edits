@@ -9,6 +9,7 @@
 */
 
 #define FUSE_USE_VERSION 26
+#define BLOCK_SIZE 4096
 
 #include <fuse.h>
 #include <stdio.h>
@@ -97,5 +98,9 @@ static struct fuse_operations hello_oper = {
 
 int main(int argc, char *argv[])
 {
+	int fd;
+	char *fs = "./FILE_FS";
+	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
+	ftruncate(fd, )
 	return fuse_main(argc, argv, &hello_oper, NULL);
 }
