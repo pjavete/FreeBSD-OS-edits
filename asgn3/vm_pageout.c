@@ -175,11 +175,16 @@ SYSCTL_INT(_vm, OID_AUTO, panic_on_oom,
 SYSCTL_INT(_vm, OID_AUTO, pageout_wakeup_thresh,
 	CTLFLAG_RWTUN, &vm_pageout_wakeup_thresh, 0,
 	"free page threshold for waking up the pageout daemon");
-
-SYSCTL_INT(_vm, OID_AUTO, pageout_update_period,
+//maybe here???
+/*SYSCTL_INT(_vm, OID_AUTO, pageout_update_period,
+        CTLFLAG_RWTUN, &vm_pageout_update_period, 0,
+        "Maximum active LRU update period");
+*/
+SYSCTL_INT(_vm, OID_AUTO, 1,
 	CTLFLAG_RWTUN, &vm_pageout_update_period, 0,
 	"Maximum active LRU update period");
-  
+
+//maybe here???
 SYSCTL_INT(_vm, OID_AUTO, lowmem_period, CTLFLAG_RWTUN, &lowmem_period, 0,
 	"Low memory callback period");
 
@@ -1139,31 +1144,33 @@ vm_pageout_scan(struct vm_domain *vmd, int pass)
 	struct timespec current;
 	getnanotime(&current);
 
-	pq = &vmd->vmd_pagequeues[PQ_ACTIVE];
-	total_count += pq->pq_cnt;
-	printpage = TAILQ_LAST(&pq->pq_pl, pglist);
-	while((printpage->flags & PG_MARKER) &&
-		(TAILQ_PREV(printpage, pglist, plinks.q) != NULL)){
-		printpage = TAILQ_PREV(printpage, pglist, plinks.q);
-	}
-	diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
-	log(1, "Youngest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
+		pq = &vmd->vmd_pagequeues[PQ_INACTIVE];
+		total_count += pq->pq_cnt;
+		printpage = TAILQ_FIRST(&pq->pq_pl);
+		if(printpage->timestamp_sec == 0){
+			printf("The oldest page has time 0\n");
+		}
+		if(printpage->wire_count != 0){
+			printf("The oldest page is wired\n");
+		}
+		if(printpage->hold_count != 0){
+			printf("The oldest page has holds\n");
+		}
+		if(vm_page_sbusied(printpage)){
+			printf("The oldest page is busy\n");
+		}
+		//diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
+		diff = (current.tv_sec - printpage->timestamp_sec);
+		printf("Oldest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
+		
+		pq = &vmd->vmd_pagequeues[PQ_ACTIVE];
+		total_count += pq->pq_cnt;
+		printpage = TAILQ_LAST(&pq->pq_pl, pglist);
+		//diff = BILLION * (current.tv_sec - printpage->timestamp_sec) + current.tv_nsec - printpage->timestamp_nsec; 
+		diff = BILLION * (current.tv_sec - printpage->timestamp_sec); 
+		printf("Youngest page in FIFO queue is %llu nanoseconds old\n", (long long unsigned int) diff);
 
-	pq = &vmd->vmd_pagequeues[PQ_INACTIVE];
-	total_count += pq->pq_cnt;
-	printpage = TAILQ_FIRST(&pq->pq_pl);
-	while((printpage->flags & PG_MARKER) && 
-		(TAILQ_NEXT(printpage, plinks.q) != NULL)){
-		printpage = TAILQ_NEXT(printpage, plinks.q);
-	}
-	/*if(printpage->timestamp_sec == 0){
-		printf("The oldest page has time 0\n");
-	}
-	if(printpage->wire_count != 0){
-		printf("The oldest page is wired\n");
-	}
-	if(printpage->hold_count != 0){
-		printf("The oldest page has holds\n");
+		printf("There are %d pages in the FIFO queue\n", total_count);
 	}
 	if(vm_page_busied(printpage)){
 		printf("The oldest page is busy\n");

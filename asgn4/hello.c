@@ -27,28 +27,32 @@ static int[NUM_BLOCKS] bitmap;
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
 	int res = 0;
-	stbuf -> st_birthtim = time(NULL); //creation time
-	stbuf -> st_atime = time(NULL); //access time
-	stbuf -> st_mtime = time(NULL); //modification time
+	stbuf->st_birthtim = time(NULL); //creation time
+	stbuf->st_atime = time(NULL);	//access time
+	stbuf->st_mtime = time(NULL);	//modification time
 	memset(stbuf, 0, sizeof(struct stat));
-	if (strcmp(path, "/") == 0) {
+	if (strcmp(path, "/") == 0)
+	{
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
-	} else if (strcmp(path, hello_path) == 0) {
+	}
+	else if (strcmp(path, hello_path) == 0)
+	{
 		stbuf->st_mode = S_IFREG | 0444;
 		stbuf->st_nlink = 1;
 		stbuf->st_size = strlen(hello_str);
-	} else
+	}
+	else
 		res = -ENOENT;
 
 	return res;
 }
 
 static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-			 off_t offset, struct fuse_file_info *fi)
+						 off_t offset, struct fuse_file_info *fi)
 {
-	(void) offset;
-	(void) fi;
+	(void)offset;
+	(void)fi;
 
 	if (strcmp(path, "/") != 0)
 		return -ENOENT;
@@ -73,38 +77,52 @@ static int hello_open(const char *path, struct fuse_file_info *fi)
 }
 
 static int hello_read(const char *path, char *buf, size_t size, off_t offset,
-		      struct fuse_file_info *fi)
+					  struct fuse_file_info *fi)
 {
 	printf("read\n");
 	size_t len;
-	(void) fi;
-	if(strcmp(path, hello_path) != 0)
+	(void)fi;
+	if (strcmp(path, hello_path) != 0)
 		return -ENOENT;
 
 	len = strlen(hello_str);
-	if (offset < len) {
+	if (offset < len)
+	{
 		if (offset + size > len)
 			size = len - offset;
 		memcpy(buf, hello_str + offset, size);
-	} else
+	}
+	else
 		size = 0;
 
 	return size;
 }
+int hello_write(const char *, const char *, size_t, off_t, struct fuse_file_info *)
+{
+}
+
+int hello_unlink(const char *)
+{
+}
+
+int hello_create(const char *, mode_t, struct fuse_file_info *)
+{
+}
 
 static struct fuse_operations hello_oper = {
-	.getattr	= hello_getattr,
-	.readdir	= hello_readdir,
-	.open		= hello_open,
-	.read		= hello_read,
-	.unlink		= hello_unlink,
-	.write		= hello_write,
-	.create		= hello_create,
+	.getattr = hello_getattr,
+	.readdir = hello_readdir,
+	.open = hello_open,
+	.read = hello_read,
+	.unlink = hello_unlink,
+	.write = hello_write,
+	.create = hello_create,
 };
 
 int main(int argc, char *argv[])
 {
-	if (NUM_BLOCKS > MAX_BLOCKS) {
+	if (NUM_BLOCKS > MAX_BLOCKS)
+	{
 		perror("NUM_BLOCKS exceeds maximum allowed amount of blocks");
 		exit(1);
 	}
@@ -112,6 +130,5 @@ int main(int argc, char *argv[])
 	int fd;
 	char *fs = "./FILE_FS";
 	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
-	ftruncate(fd, BLOCK_SIZE*NUM_BLOCKS)
-	return fuse_main(argc, argv, &hello_oper, NULL);
+	ftruncate(fd, BLOCK_SIZE * NUM_BLOCKS) return fuse_main(argc, argv, &hello_oper, NULL);
 }
