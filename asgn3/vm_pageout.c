@@ -175,11 +175,13 @@ SYSCTL_INT(_vm, OID_AUTO, panic_on_oom,
 SYSCTL_INT(_vm, OID_AUTO, pageout_wakeup_thresh,
 	CTLFLAG_RWTUN, &vm_pageout_wakeup_thresh, 0,
 	"free page threshold for waking up the pageout daemon");
-//maybe here???
-/*SYSCTL_INT(_vm, OID_AUTO, pageout_update_period,
+
+SYSCTL_INT(_vm, OID_AUTO, pageout_update_period,
         CTLFLAG_RWTUN, &vm_pageout_update_period, 0,
         "Maximum active LRU update period");
-*/
+		
+//SYSCTL_INT(parent, nbr, name, access, ptr, val, descr);
+
 SYSCTL_INT(_vm, OID_AUTO, 1,
 	CTLFLAG_RWTUN, &vm_pageout_update_period, 0,
 	"Maximum active LRU update period");
