@@ -66,19 +66,30 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int hello_open(const char *path, struct fuse_file_info *fi)
 {
+	int fd;
 	printf("open\n");
+	//might need to manipulate the string to make sure it's the path?
+	// char fpath[SOME_VALUE];
 	if (strcmp(path, hello_path) != 0)
 		return -ENOENT;
-
 	if ((fi->flags & 3) != O_RDONLY)
 		return -EACCES;
 
+	fd = open(path, fi->flags);
+	if(fd < 0){
+		perror("Error: open failed to execute");
+	}
+	fi->fh = fd;
+	//not sure what this does, and can't find documentation of it
+	log_fi(fi);
 	return 0;
 }
 
 static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 					  struct fuse_file_info *fi)
 {
+	//rs = read status
+	int rs;
 	printf("read\n");
 	size_t len;
 	(void)fi;
@@ -95,8 +106,14 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	else
 		size = 0;
 
+	rs = pread(fi->fh, buf, size, offset);
+	if(rs < 0){
+		perror("Error: read failed to execute");
+	}
+
 	return size;
 }
+
 int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	printf("write\n");
