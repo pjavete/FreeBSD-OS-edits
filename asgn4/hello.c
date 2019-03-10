@@ -144,8 +144,8 @@ int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	struct metadata md;
 	strcpy(md.filename, path);
 	md.block_size = 0;
-	clock_gettime(CLOCK_REALTIME, md.create_time);
-	clock_gettime(CLOCK_REALTIME, md.modify_time);
+	clock_gettime(CLOCK_REALTIME, &md.create_time);
+	clock_gettime(CLOCK_REALTIME, &md.modify_time);
 	lseek(fd, offset, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
 	printf("create success\n");
