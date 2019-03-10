@@ -11,18 +11,30 @@
 #define FUSE_USE_VERSION 26
 #define BLOCK_SIZE 4096
 #define NUM_BLOCKS 100
-#define MAX_BLOCKS 1023
+#define MAX_BLOCKS ((BLOCK_SIZE - 4) / 4)
 
 #include <fuse.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
 
 static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
 
 static int bitmap[NUM_BLOCKS];
+
+struct metadata {
+	char filename[20];
+	int block_size;
+	struct timespec create_time;
+	struct timespec access_time;
+	struct timespec modify_time;
+	int next;
+};
+
+#define USABLE_SPACE (BLOCK_SIZE - sizeof(struct metadata))
 
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
@@ -112,6 +124,16 @@ int hello_unlink(const char *path)
 int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
 	printf("create\n");
+	int nextAvailableBlock = 0;
+	for (int i = 0; i < NUM_BLOCKS; i++) {
+		if (bitmap[i] == 0){
+			nextAvailableBlock = i;
+			bitmap[i] = 1;
+			break;
+		}
+	}
+	if (nextAvailableBlock == 0)
+		return -ENOMEM;
 	return 0;
 }
 
