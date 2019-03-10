@@ -42,6 +42,7 @@ struct metadata {
 
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
+	printf("getattr\n");
 	int res = 0;
 	//stbuf->st_birthtim = time(NULL); //creation time
 	//stbuf->st_atime = time(NULL);	//access time
@@ -67,6 +68,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 						 off_t offset, struct fuse_file_info *fi)
 {
+	printf("readdir\n");
 	(void)offset;
 	(void)fi;
 
