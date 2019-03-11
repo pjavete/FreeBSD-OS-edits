@@ -45,20 +45,36 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 {
 	printf("getattr\n");
 	int res = 0;
-	//stbuf->st_birthtim = time(NULL); //creation time
-	//stbuf->st_atime = time(NULL);	//access time
-	//stbuf->st_mtime = time(NULL);	//modification time
+	int file_found = 0;
+	int file_size = 0;
+
+	struct metadata md;
+	for (int i = 0; i < NUM_BLOCKS && strcmp(path, "/") != 0; ++i)
+	{
+		if(bitmap[i] = 1){
+			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
+			read(fd, md, sizeof(metadata));
+			if(strcmp(path, md.filename) == 0){
+				int file_found = 1;
+				break;
+			}
+		}
+	}
+
+
 	memset(stbuf, 0, sizeof(struct stat));
+
+	stbuf->st_birthtim = md.create_time; //creation time
+	stbuf->st_atime = md.access_time;	//access time
+	stbuf->st_mtime = md.modify_time;	//modification time	
 	if (strcmp(path, "/") == 0)
 	{
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
 	}
-	else if (strcmp(path, hello_path) == 0)
+	else if (file_found == 1)
 	{
-		stbuf->st_mode = S_IFREG | 0444;
-		stbuf->st_nlink = 1;
-		stbuf->st_size = strlen(hello_str);
+		stbuf->st_size = getSize(md);
 	}
 	else
 		res = -ENOENT;
@@ -153,6 +169,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 int hello_unlink(const char *path)
 {
 	printf("unlink\n");
+
 	return 0;
 }
 
