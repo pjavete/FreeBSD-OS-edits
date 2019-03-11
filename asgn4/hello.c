@@ -178,11 +178,12 @@ int main(int argc, char *argv[])
 	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
 	ftruncate(fd, BLOCK_SIZE * NUM_BLOCKS);
 
-	int magic;
-	read(fd, *magic, 4);
-	if (magic == 0) {
+	int32_t magic_number = MAGIC_NUMBER;
+	int32_t magic_test;
+	read(fd, &magic_test, 4);
+	if (magic_test == 0) {
 		bitmap[0] = 1;
-		write(fd, MAGIC_NUMBER, 4);
+		write(fd, magic_number, 4);
 		write(fd, bitmap, sizeof(bitmap));
 	}
 	lseek(fd, 4, SEEK_SET);
