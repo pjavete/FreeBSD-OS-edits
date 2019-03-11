@@ -89,7 +89,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	}
 	else
 	{
-		perror("Could not find attributes for the file %s\n", path);
+		printf("Could not find attributes for the file %s\n", path);
 		res = -ENOENT;
 	}
 		
@@ -176,7 +176,7 @@ int hello_unlink(const char *path)
 			}
 		}
 	}
-	perror("Could not remove the file %s\n", path);
+	printf("Could not remove the file %s\n", path);
 	return -ENOENT;
 }
 
