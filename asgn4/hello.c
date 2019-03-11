@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
 	fd = open(fs, O_RDWR | O_CREAT, 0666);
 	ftruncate(fd, BLOCK_SIZE * NUM_BLOCKS);
 
-	int32_t magic_number = MAGIC_NUMBER;
+	int32_t magic_number = 0xfa19283e;
 	int32_t magic_test;
 	read(fd, &magic_test, 4);
 	if (magic_test == 0) {
