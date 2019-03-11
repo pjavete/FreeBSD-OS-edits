@@ -136,16 +136,23 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 {
 	printf("read\n");
 	struct metadata md;
-	size_t len;
 	(void)fi;
 	while(1){
 		lseek(fd, offset + sizeof(struct metadata), SEEK_SET);
-		memcpy(buf, offset + sizeof(struct metadata), size);
-		if(md.next == NULL){
+		if(size > USABLE_SPACE){
+			size = size - USABLE_SPACE;
+			read(fd, buf, USABLE_SPACE);
+			memcpy(buf, path, USABLE_SPACE);
+		} else {
+			read(fd, buf, size);
+			memcpy(buf, path, size);
+			break;
+		}
+		if(md.next == 0 || size <= 0){
 			break;
 		}
 	}
-	return size;
+	return sizeof(buf);
 }
 
 int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
