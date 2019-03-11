@@ -122,7 +122,7 @@ static int hello_open(const char *path, struct fuse_file_info *fi)
 	for(int i = 0; i < NUM_BLOCKS; i++){
 		if(bitmap[i] == 1){
 			lseek(fd, BLOCK_SIZE * i, SEEK_SET);
-			if(strcomp(md.file_name, path) == 0){
+			if(strcmp(md.filename, path) == 0){
 				clock_gettime(CLOCK_REALTIME, &md.access_time);
 				return 0;
 			}
