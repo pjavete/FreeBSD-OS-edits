@@ -66,22 +66,32 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int hello_open(const char *path, struct fuse_file_info *fi)
 {
-	int fd;
+	int offset;
+	int open_status;
+	struct metadata md;
 	printf("open\n");
 	//might need to manipulate the string to make sure it's the path?
-	// char fpath[SOME_VALUE];
+	//char fpath[SOME_VALUE];
 	if (strcmp(path, hello_path) != 0)
 		return -ENOENT;
-	if ((fi->flags & 3) != O_RDONLY)
-		return -EACCES;
+	else{
 
-	fd = open(path, fi->flags);
-	if(fd < 0){
-		perror("Error: open failed to execute");
 	}
-	fi->fh = fd;
-	//not sure what this does, and can't find documentation of it
-	log_fi(fi);
+	/*
+	//use read (fd, buf, size) and then check
+	//iterate through bitmap and see if there a file that matches. (strcomp)
+	//if yes, then open the file (lseek???)
+	//log access time (use sizeof)
+	//if not, call create
+	for(int i = 0; i < NUM_BLOCKS; i++){
+		if(bitmap[i] == 1){
+			lseek(fd, offset * i, SEEK_SET);
+			if(md.filename == path){
+				clock_gettime(CLOCK_REALTIME, &md.access_time);
+			}
+		}
+	}
+	*/
 	return 0;
 }
 
@@ -105,12 +115,13 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	}
 	else
 		size = 0;
-
-	rs = pread(fi->fh, buf, size, offset);
-	if(rs < 0){
-		perror("Error: read failed to execute");
+	lseek(fd, offset + sizeof(metadata), SEEK_CUR);
+	for(int i = 0; i != NULL; i++){
+		printf(i);
 	}
-
+	if(next != NULL){
+		//hello_read recursive call maybe?
+	}
 	return size;
 }
 
