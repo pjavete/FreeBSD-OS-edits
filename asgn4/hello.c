@@ -85,19 +85,40 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int hello_open(const char *path, struct fuse_file_info *fi)
 {
+	int offset;
+	int open_status;
+	struct metadata md;
 	printf("open\n");
+	//might need to manipulate the string to make sure it's the path?
+	//char fpath[SOME_VALUE];
 	if (strcmp(path, hello_path) != 0)
 		return -ENOENT;
+	else{
 
-	if ((fi->flags & 3) != O_RDONLY)
-		return -EACCES;
-
+	}
+	/*
+	//use read (fd, buf, size) and then check
+	//iterate through bitmap and see if there a file that matches. (strcomp)
+	//if yes, then open the file (lseek???)
+	//log access time (use sizeof)
+	//if not, call create
+	for(int i = 0; i < NUM_BLOCKS; i++){
+		if(bitmap[i] == 1){
+			lseek(fd, offset * i, SEEK_SET);
+			if(md.filename == path){
+				clock_gettime(CLOCK_REALTIME, &md.access_time);
+			}
+		}
+	}
+	*/
 	return 0;
 }
 
 static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 					  struct fuse_file_info *fi)
 {
+	//rs = read status
+	int rs;
 	printf("read\n");
 	size_t len;
 	(void)fi;
@@ -113,9 +134,16 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	}
 	else
 		size = 0;
-
+	lseek(fd, offset + sizeof(metadata), SEEK_CUR);
+	for(int i = 0; i != NULL; i++){
+		printf(i);
+	}
+	if(next != NULL){
+		//hello_read recursive call maybe?
+	}
 	return size;
 }
+
 int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	printf("write\n");
