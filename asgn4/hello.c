@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 	read(fd, &magic_test, 4);
 	if (magic_test == 0) {
 		bitmap[0] = 1;
-		write(fd, magic_number, 4);
+		write(fd, &magic_number, 4);
 		write(fd, bitmap, sizeof(bitmap));
 	}
 	lseek(fd, 4, SEEK_SET);
