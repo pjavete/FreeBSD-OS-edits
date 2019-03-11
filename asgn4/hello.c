@@ -75,10 +75,6 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	}
 
 	memset(stbuf, 0, sizeof(struct stat));
-
-	stbuf->st_birthtim = md.create_time; //creation time
-	stbuf->st_atime = md.access_time.tv_sec;	//access time
-	stbuf->st_mtime = md.modify_time.tv_sec;	//modification time	
 	if (strcmp(path, "/") == 0)
 	{
 		stbuf->st_mode = S_IFDIR | 0755;
@@ -86,10 +82,17 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	}
 	else if (file_found == 1)
 	{
+		stbuf->st_birthtim = md.create_time; //creation time
+		stbuf->st_atime = md.access_time.tv_sec;	//access time
+		stbuf->st_mtime = md.modify_time.tv_sec;	//modification time	
 		stbuf->st_size = getSize(md);
 	}
 	else
+	{
+		printf("Could not find attributes for the file %s\n", path);
 		res = -ENOENT;
+	}
+		
 
 	return res;
 }
@@ -186,6 +189,7 @@ int hello_unlink(const char *path)
 			}
 		}
 	}
+	printf("Could not remove the file %s\n", path);
 	return -ENOENT;
 }
 
