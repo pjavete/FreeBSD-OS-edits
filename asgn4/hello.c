@@ -66,7 +66,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	{
 		if(bitmap[i] == 1){
 			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
-			read(fd, &md, sizeof(metadata));
+			read(fd, &md, sizeof(struct metadata));
 			if(strcmp(path, md.filename) == 0){
 				int file_found = 1;
 				break;
@@ -76,7 +76,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 
 	memset(stbuf, 0, sizeof(struct stat));
 
-	stbuf->st_birthtim = md.create_time.tv_sec; //creation time
+	stbuf->st_birthtim = md.create_time; //creation time
 	stbuf->st_atime = md.access_time.tv_sec;	//access time
 	stbuf->st_mtime = md.modify_time.tv_sec;	//modification time	
 	if (strcmp(path, "/") == 0)
@@ -186,7 +186,7 @@ int hello_unlink(const char *path)
 	{
 		if(bitmap[i] == 1){
 			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
-			read(fd, md, sizeof(struct metadata));
+			read(fd, &md, sizeof(struct metadata));
 			if(strcmp(path, md.filename) == 0){
 				bitmap[i] = 0;
 				while(md.next != 0){
