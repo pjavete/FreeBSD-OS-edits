@@ -41,6 +41,20 @@ struct metadata {
 
 #define USABLE_SPACE (BLOCK_SIZE - sizeof(struct metadata))
 
+static int getSize(struct metadata md){
+	int file_size = md.block_size;
+	if (md.next == 0){
+		return file_size;
+	} else {
+		while(md.next != 0){
+			lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			file_size += md.block_size;
+		}
+		return file_size;
+	}
+}
+
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
 	printf("getattr\n");
@@ -50,9 +64,9 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	struct metadata md;
 	for (int i = 0; i < NUM_BLOCKS && strcmp(path, "/") != 0; ++i)
 	{
-		if(bitmap[i] = 1){
+		if(bitmap[i] == 1){
 			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
-			read(fd, md, sizeof(metadata));
+			read(fd, &md, sizeof(metadata));
 			if(strcmp(path, md.filename) == 0){
 				int file_found = 1;
 				break;
@@ -62,9 +76,9 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 
 	memset(stbuf, 0, sizeof(struct stat));
 
-	stbuf->st_birthtim = md.create_time; //creation time
-	stbuf->st_atime = md.access_time;	//access time
-	stbuf->st_mtime = md.modify_time;	//modification time	
+	stbuf->st_birthtim = md.create_time.tv_sec; //creation time
+	stbuf->st_atime = md.access_time.tv_sec;	//access time
+	stbuf->st_mtime = md.modify_time.tv_sec;	//modification time	
 	if (strcmp(path, "/") == 0)
 	{
 		stbuf->st_mode = S_IFDIR | 0755;
@@ -78,20 +92,6 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 		res = -ENOENT;
 
 	return res;
-}
-
-static int getSize(struct metadata md){
-	int file_size = md.block_size;
-	if (md.next == 0){
-		return file_size;
-	} else {
-		while(md.next != 0){
-			lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
-			read(fd, md, sizeof(struct metadata));
-			file_size += md.block_size;
-		}
-		return file_size;
-	}
 }
 
 static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
@@ -162,13 +162,13 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	}
 	else
 		size = 0;
-	lseek(fd, offset + sizeof(metadata), SEEK_CUR);
+	/*lseek(fd, offset + sizeof(metadata), SEEK_CUR);
 	for(int i = 0; i != NULL; i++){
-		printf(i);
+		//printf(i);
 	}
-	if(next != NULL){
+	if(md.next != NULL){
 		//hello_read recursive call maybe?
-	}
+	} */
 	return size;
 }
 
@@ -184,15 +184,15 @@ int hello_unlink(const char *path)
 	struct metadata md;
 	for (int i = 0; i < NUM_BLOCKS; ++i)
 	{
-		if(bitmap[i] = 1){
+		if(bitmap[i] == 1){
 			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
-			read(fd, md, sizeof(metadata));
+			read(fd, md, sizeof(struct metadata));
 			if(strcmp(path, md.filename) == 0){
 				bitmap[i] = 0;
 				while(md.next != 0){
 					bitmap[md.next] = 0;
 					lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
-					read(fd, md, sizeof(struct metadata));					
+					read(fd, &md, sizeof(struct metadata));					
 				}
 				lseek(fd, 4, SEEK_SET);
 				write(fd, bitmap, sizeof(bitmap));
