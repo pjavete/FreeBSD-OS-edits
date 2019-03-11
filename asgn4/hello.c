@@ -9,6 +9,7 @@
 */
 
 #define FUSE_USE_VERSION 26
+#define MAGIC_NUMBER 0xfa19283e
 #define BLOCK_SIZE 4096
 #define NUM_BLOCKS 100
 #define MAX_BLOCKS ((BLOCK_SIZE - 4) / 4)
@@ -173,9 +174,18 @@ int main(int argc, char *argv[])
 		perror("NUM_BLOCKS exceeds maximum allowed amount of blocks");
 		exit(1);
 	}
-	bitmap[0] = 1;
 	char *fs = "./FILE_FS";
 	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
 	ftruncate(fd, BLOCK_SIZE * NUM_BLOCKS);
+
+	int magic;
+	read(fd, *magic, 4);
+	if (magic == 0) {
+		bitmap[0] = 1;
+		write(fd, MAGIC_NUMBER, 4);
+		write(fd, bitmap, sizeof(bitmap));
+	}
+	lseek(fd, 4, SEEK_SET);
+	read(fd, bitmap, sizeof(bitmap));
 	return fuse_main(argc, argv, &hello_oper, NULL);
 }
