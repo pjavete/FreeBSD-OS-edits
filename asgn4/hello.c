@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	char *fs = "./FILE_FS";
-	fd = open(fs, O_RDWR | O_APPEND | O_CREAT, 0666);
+	fd = open(fs, O_RDWR | O_CREAT, 0666);
 	ftruncate(fd, BLOCK_SIZE * NUM_BLOCKS);
 
 	int32_t magic_number = MAGIC_NUMBER;
