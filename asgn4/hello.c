@@ -263,5 +263,6 @@ int main(int argc, char *argv[])
 	}
 	lseek(fd, 4, SEEK_SET);
 	read(fd, bitmap, sizeof(bitmap));
+	close(fd);
 	return fuse_main(argc, argv, &hello_oper, NULL);
 }
