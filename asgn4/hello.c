@@ -89,7 +89,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	}
 	else
 	{
-		perror("Could not find attributes for the file %s\n");
+		printf("Could not find attributes for the file %s\n", path);
 		res = -ENOENT;
 	}
 		
@@ -122,7 +122,7 @@ static int hello_open(const char *path, struct fuse_file_info *fi)
 	for(int i = 0; i < NUM_BLOCKS; i++){
 		if(bitmap[i] == 1){
 			lseek(fd, BLOCK_SIZE * i, SEEK_SET);
-			if(strcomp(md.file_name, path) == 0){
+			if(strcmp(md.filename, path) == 0){
 				clock_gettime(CLOCK_REALTIME, &md.access_time);
 				return 0;
 			}
@@ -183,7 +183,7 @@ int hello_unlink(const char *path)
 			}
 		}
 	}
-	perror("Could not remove the file %s\n");
+	printf("Could not remove the file %s\n", path);
 	return -ENOENT;
 }
 
