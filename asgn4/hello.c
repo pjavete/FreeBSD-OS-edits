@@ -119,8 +119,6 @@ static int hello_open(const char *path, struct fuse_file_info *fi)
 	printf("open\n");
 	int open_status;
 	struct metadata md;
-	//might need to manipulate the string to make sure it's the path?
-	//char fpath[SOME_VALUE];
 	for(int i = 0; i < NUM_BLOCKS; i++){
 		if(bitmap[i] == 1){
 			lseek(fd, BLOCK_SIZE * i, SEEK_SET);
@@ -140,17 +138,6 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	struct metadata md;
 	size_t len;
 	(void)fi;
-	len = strlen(hello_str);
-	//do we keep or delete?
-	//i feel like we should delete
-	if (offset < len)
-	{
-		if (offset + size > len)
-			size = len - offset;
-		memcpy(buf, hello_str + offset, size);
-	}
-	else
-		size = 0;
 	while(1){
 		lseek(fd, offset + sizeof(struct metadata), SEEK_SET);
 		memcpy(buf, offset + sizeof(struct metadata), size);
