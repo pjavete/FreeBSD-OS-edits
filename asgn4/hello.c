@@ -47,7 +47,6 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	printf("getattr for %s\n", path);
 	int res = 0;
 	int file_found = 0;
-	int block_num;
 
 	fd = open(FILENAME, O_RDONLY);
 	lseek(fd, 4, SEEK_SET);
