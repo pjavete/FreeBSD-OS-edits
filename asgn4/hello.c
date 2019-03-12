@@ -62,20 +62,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	int res = 0;
 	int file_found = 0;
 	int block_num;
-
 	struct metadata md;
-	for (int i = 1; i < NUM_BLOCKS; i++)
-	{
-		if(bitmap[i] == 1){
-			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
-			read(fd, &md, sizeof(struct metadata));
-			if(strcmp(path, md.filename) == 0){
-				file_found = 1;
-				block_num = i;
-				break;
-			}
-		}
-	}
 
 	memset(stbuf, 0, sizeof(struct stat));
 	if (strcmp(path, "/") == 0)
@@ -92,6 +79,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 		stbuf->nlink = 1;
 		stbuf->st_size = getSize(md);
 	}
+	else if ()
 	else
 	{
 		printf("Could not find attributes for the file %s\n", path);
@@ -115,6 +103,17 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
 	filler(buf, hello_path + 1, NULL, 0);
+
+	for (int i = 1; i < NUM_BLOCKS; i++)
+	{
+		if(bitmap[i] == 1){
+			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			if(!strcmp(md.filename, "")){
+				filler(buf, md.filename + 1, NULL, 0);
+			}
+		}
+	}
 
 	return 0;
 }
