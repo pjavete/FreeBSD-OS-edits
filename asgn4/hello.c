@@ -375,22 +375,24 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 		}
 		size -= USABLE_SPACE;
 	}
-	int nextAvailableBlock = 0;
-	for (int i = 1; i < NUM_BLOCKS; i++) {
-		if (bitmap[i] == 0){
-			nextAvailableBlock = i;
-			bitmap[i] = 1;
-			md.next = i;
-			lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
-			write(fd, &md, sizeof(struct metadata));
-			lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
-			write(fd, write_buf, sizeof(write_buf));
-			break;
+	if (size > 0){
+		int nextAvailableBlock = 0;
+		for (int i = 1; i < NUM_BLOCKS; i++) {
+			if (bitmap[i] == 0){
+				nextAvailableBlock = i;
+				bitmap[i] = 1;
+				md.next = i;
+				lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
+				write(fd, &md, sizeof(struct metadata));
+				lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
+				write(fd, write_buf, sizeof(write_buf));
+				break;
+			}
 		}
-	}
-	if (nextAvailableBlock == 0){
-		close(fd);
-		return -ENOMEM;
+		if (nextAvailableBlock == 0){
+			close(fd);
+			return -ENOMEM;
+		}
 	}
 	lseek(fd, file_start, SEEK_SET);
 	read(fd, &md, sizeof(struct metadata));
