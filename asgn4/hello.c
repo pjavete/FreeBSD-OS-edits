@@ -10,6 +10,7 @@
 
 #define FUSE_USE_VERSION 26
 #define MAGIC_NUMBER 0xfa19283e
+#define FILENAME "./FILE_FS"
 #define BLOCK_SIZE 4096
 #define NUM_BLOCKS 100
 #define MAX_BLOCKS ((BLOCK_SIZE - 4) / 4)
@@ -119,9 +120,11 @@ static int hello_open(const char *path, struct fuse_file_info *fi)
 	printf("open\n");
 	int open_status;
 	struct metadata md;
-	for(int i = 0; i < NUM_BLOCKS; i++){
+	fd = open(FILENAME, O_RDONLY);
+	for(int i = 1; i < NUM_BLOCKS; i++){
 		if(bitmap[i] == 1){
 			lseek(fd, BLOCK_SIZE * i, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
 			if(strcmp(md.filename, path) == 0){
 				clock_gettime(CLOCK_REALTIME, &md.access_time);
 				return 0;
@@ -233,8 +236,7 @@ int main(int argc, char *argv[])
 		perror("NUM_BLOCKS exceeds maximum allowed amount of blocks");
 		exit(1);
 	}
-	char *fs = "./FILE_FS";
-	fd = open(fs, O_RDWR | O_CREAT, 0666);
+	fd = open(FILENAME, O_RDWR | O_CREAT, 0666);
 	ftruncate(fd, BLOCK_SIZE * NUM_BLOCKS);
 
 	int32_t magic_number = 0xfa19283e;
