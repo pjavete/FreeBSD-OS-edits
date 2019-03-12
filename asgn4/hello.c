@@ -258,7 +258,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	char *block_buffer;
 	(void)fi;
 	off_t saved_offset = lseek(fd, 0, SEEK_CUR);
-
+	int free_block = 0;
 	struct metadata md;
 	read(fd, &md, sizeof(struct metadata));
 
@@ -268,11 +268,23 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 		return an error that an argument is invalid
 	*/ 
 	//should allocate another block
-	int file_size = getSize(md);
-	if((int) size > (file_size - (int) offset)){
-		return -EINVAL;
+	if((int) size > (md.file_size - (int) offset)){
+		for(int i = 0; i < NUM_BLOCKS; i++){
+			if(bitmap[i] == 0){
+				free_block = 1;
+				break;
+			}
+		}
+		if(free_block == 1){
+			strcpy(md.filename, path);
+			md.file_size = 0;
+			clock_gettime(CLOCK_REALTIME, &md.create_time);
+			clock_gettime(CLOCK_REALTIME, &md.modify_time);
+			md.next = 0;
+		}else{
+			return -ENOMEM;
+		}
 	}
-	//what happens if the size we are trying to write is larger than buf???
 	
 	/*
 		Now checks to see if the offset starts in a block of the file
