@@ -201,8 +201,11 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 int hello_unlink(const char *path)
 {
 	printf("unlink\n");
+
+	fd = open(FILENAME, O_RDWR);
+
 	struct metadata md;
-	for (int i = 0; i < NUM_BLOCKS; ++i)
+	for (int i = 1; i < NUM_BLOCKS; ++i)
 	{
 		if(bitmap[i] == 1){
 			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
@@ -215,11 +218,12 @@ int hello_unlink(const char *path)
 					read(fd, &md, sizeof(struct metadata));					
 				}
 				lseek(fd, 4, SEEK_SET);
-				write(fd, bitmap, sizeof(bitmap));
+				write(fd, &bitmap, sizeof(bitmap));
 				return 0;
 			}
 		}
 	}
+	close(fd);
 	printf("Could not remove the file %s\n", path);
 	return -ENOENT;
 }
