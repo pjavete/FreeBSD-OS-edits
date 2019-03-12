@@ -83,6 +83,8 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	}
 	else if (file_found == 1)
 	{
+		stbuf->st_mode = S_IFREG | 0444;
+		stbuf->st_nlink = 1;
 		stbuf->st_birthtim = md.create_time; //creation time
 		stbuf->st_atim = md.access_time;	//access time
 		stbuf->st_mtim = md.modify_time;	//modification time	
@@ -110,7 +112,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 	//filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
-	filler(buf, hello_path + 1, NULL, 0);
+	filler(buf, path + 1, NULL, 0);
 
 	return 0;
 }
@@ -126,45 +128,207 @@ static int hello_open(const char *path, struct fuse_file_info *fi)
 			read(fd, &md, sizeof(struct metadata));
 			if(strcmp(md.filename, path) == 0){
 				clock_gettime(CLOCK_REALTIME, &md.access_time);
+				write(fd, &md, sizeof(struct metadata));
 				return 0;
 			}
 		}
 	}
 	return -ENOENT;
+
 }
 
 static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 					  struct fuse_file_info *fi)
 {
 	printf("read\n");
-	struct metadata md;
-	//size_t read_size;
-	int	read_in = 0;
+	size_t read_size;
+	char *block_buffer;
 	(void)fi;
-	while(1){
-		lseek(fd, offset + sizeof(struct metadata), SEEK_SET);
-		read_size = USABLE_SPACE - offset;
-		if(size > USABLE_SPACE){
-			size = size - (USABLE_SPACE + offset);
-			read(fd, buf, read_size);
-			memcpy(buf, path, read_size);
+	off_t saved_offset = lseek(fd, 0, SEEK_CUR);
+
+	struct metadata md;
+	read(fd, &md, sizeof(struct metadata));
+
+	/*
+		Checks to see if the total size of the file minus the offset
+		is smaller than the size we are trying to read and if so we
+		return an error that an argument is invalid
+	*/ 
+	int file_size = getSize(md);
+	if((int) size > (file_size - (int) offset)){
+		return -EINVAL;
+	}
+
+	/*
+		Now checks to see if the offset starts in a block of the file
+		other than the first block and sets the file offset to the
+		start of the file that the offset is in
+	*/ 
+	if((int) offset > USABLE_SPACE){
+		if (md.next == 0){
+			return -EINVAL;
 		} else {
-			read(fd, buf, read_size);
-			memcpy(buf, path, read_size);
-			break;
+			int file_blocks = (file_size/USABLE_SPACE);
+			int block_offset = ((int) offset/USABLE_SPACE);
+			if (file_blocks < block_offset){
+				return -EINVAL;
+			} else {
+				for (int i = 1; i < file_blocks; i++){
+					lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
+					if (i == block_offset){
+						offset = offset - (off_t) (i*USABLE_SPACE);
+						break;
+					}
+					read(fd, &md, sizeof(struct metadata));
+				}
+			}
 		}
-		if(md.next == 0 || size <= 0){
+	} else {
+		lseek(fd, saved_offset, SEEK_SET);
+	}
+
+	read(fd, &md, sizeof(struct metadata));
+	lseek(fd, offset + sizeof(struct metadata), SEEK_CUR);
+
+	/*
+		If size is bigger than remaining space after offset
+		then we read in only that portion from out block, else
+		we just read that little snippet
+	*/
+	if(size > (USABLE_SPACE - offset)){
+		read_size = USABLE_SPACE - offset;
+		size = size - read_size;
+		read(fd, block_buffer, read_size);
+		strcat(buf, block_buffer);
+	} else {
+		read(fd, buf, size);
+		size = 0;
+	}
+
+	/*
+		If the size that we want to read spans across mutliple
+		blocks of the file, then we go looking
+	*/
+	while(md.next != 0 && size > 0){
+		lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
+		read(fd, &md, sizeof(struct metadata));	
+		if(size > USABLE_SPACE){
+			size = size - USABLE_SPACE;
+			read(fd, block_buffer, USABLE_SPACE);
+			strcat(buf, block_buffer);
+		} else {
+			read(fd, buf, size);
+			strcat(buf, block_buffer);
 			break;
 		}
 		offset = md.next * BLOCK_SIZE;
 		//read_in = sizeof(buf);
 	}
+	lseek(fd, saved_offset, SEEK_SET);
+	read(fd, &md, sizeof(struct metadata));
+	clock_gettime(CLOCK_REALTIME, &md.access_time);
+	write(fd, &md, sizeof(struct metadata)); 
+
 	return sizeof(buf);
 }
 
 int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	printf("write\n");
+	size_t write_size;
+	char *block_buffer;
+	(void)fi;
+	off_t saved_offset = lseek(fd, 0, SEEK_CUR);
+
+	struct metadata md;
+	read(fd, &md, sizeof(struct metadata));
+
+	/*
+		Checks to see if the total size of the file minus the offset
+		is smaller than the size we are trying to write and if so we
+		return an error that an argument is invalid
+	*/ 
+	//should allocate another block
+	int file_size = getSize(md);
+	if((int) size > (file_size - (int) offset)){
+		return -EINVAL;
+	}
+	//what happens if the size we are trying to write is larger than buf???
+	
+	/*
+		Now checks to see if the offset starts in a block of the file
+		other than the first block and sets the file offset to the
+		start of the file that the offset is in
+	*/ 
+	if((int) offset > USABLE_SPACE){
+		if (md.next == 0){
+			return -EINVAL;
+		} else {
+			int file_blocks = (file_size/USABLE_SPACE);
+			int block_offset = ((int) offset/USABLE_SPACE);
+			if (file_blocks < block_offset){
+				return -EINVAL;
+			} else {
+				for (int i = 1; i < file_blocks; i++){
+					lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
+					if (i == block_offset){
+						offset = offset - (off_t) (i*USABLE_SPACE);
+						break;
+					}
+					read(fd, &md, sizeof(struct metadata));
+				}
+			}
+		}
+	} else {
+		lseek(fd, saved_offset, SEEK_SET);
+	}
+
+	read(fd, &md, sizeof(struct metadata));
+	lseek(fd, offset + sizeof(struct metadata), SEEK_CUR);
+
+	/*
+		If size is bigger than remaining space after offset
+		then we write in only that portion from out block, else
+		we just write that little snippet
+	*/
+	if(size > (USABLE_SPACE - offset)){
+		write_size = USABLE_SPACE - offset;
+		size = size - write_size;
+		//writes file, from buf write_size number of char
+		//im pretty sure we're writing the characters from buf into the file
+		write(fd, buf, write_size);
+		//once im finished writing in here, do i have to change buf, or 
+		//will the next write continue where it left off
+		buf = buf + write_size
+	} else {
+		write(fd, buf, size);
+		size = 0;
+	}
+
+	/*
+		If the size that we want to write spans across mutliple
+		blocks of the file, then we go looking
+	*/
+	while(md.next != 0 && size > 0){
+		lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
+		read(fd, &md, sizeof(struct metadata));	
+		if(size > USABLE_SPACE){
+			size = size - USABLE_SPACE;
+			write(fd, block_buffer, USABLE_SPACE);
+			//buf = buf + USABLE_SPACE
+		} else {
+			write(fd, buf, size);
+			//buf = buf + size
+			break;
+		}
+		offset = md.next * BLOCK_SIZE;
+		//read_in = sizeof(buf);
+	}
+	lseek(fd, saved_offset, SEEK_SET);
+	read(fd, &md, sizeof(struct metadata));
+	clock_gettime(CLOCK_REALTIME, &md.modify_time);
+	write(fd, &md, sizeof(struct metadata)); 
+	
 	return 0;
 }
 
