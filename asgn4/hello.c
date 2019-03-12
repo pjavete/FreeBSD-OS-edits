@@ -58,7 +58,7 @@ static int getSize(struct metadata md){
 
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
-	printf("getattr\n");
+	printf("getattr for %s\n", path);
 	int res = 0;
 	int file_found = 0;
 	int block_num;
