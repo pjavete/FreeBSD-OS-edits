@@ -217,11 +217,18 @@ int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	printf("create\n");
 	(void)mode;
 	(void)fi;
+
+	fd = open(FILENAME, O_RDWR);
+	lseek(fd, 4, SEEK_SET);
+	read(fd, &bitmap, sizeof(bitmap));
+
 	int nextAvailableBlock = 0;
 	for (int i = 0; i < NUM_BLOCKS; i++) {
 		if (bitmap[i] == 0){
 			nextAvailableBlock = i;
 			bitmap[i] = 1;
+			lseek(fd, 4, SEEK_SET);
+			write(fd, &bitmap, sizeof(bitmap));
 			break;
 		}
 	}
@@ -237,6 +244,7 @@ int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	clock_gettime(CLOCK_REALTIME, &md.modify_time);
 	lseek(fd, offset, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
+	close(fd);
 	printf("create success\n");
 	return 0;
 }
