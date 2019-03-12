@@ -64,6 +64,8 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	int block_num;
 
 	fd = open(FILENAME, O_RDONLY);
+	lseek(fd, 4, SEEK_SET);
+	read(fd, &bitmap, sizeof(bitmap));
 
 	struct metadata md;
 	for (int i = 1; i < NUM_BLOCKS; i++)
@@ -126,7 +128,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
-	//filler(buf, hello_path + 1, NULL, 0);
+	filler(buf, hello_path + 1, NULL, 0);
 
 	for (int i = 1; i < NUM_BLOCKS; i++)
 	{
