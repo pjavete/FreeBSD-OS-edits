@@ -33,7 +33,7 @@ static int fd;
 
 struct metadata {
 	char filename[MAX_FILENAME_LENGTH];
-	int block_size;
+	int file_size;
 	struct timespec create_time;
 	struct timespec access_time;
 	struct timespec modify_time;
@@ -42,35 +42,28 @@ struct metadata {
 
 #define USABLE_SPACE (BLOCK_SIZE - sizeof(struct metadata))
 
-static int getSize(struct metadata md){
-	int file_size = md.block_size;
-	if (md.next == 0){
-		return file_size;
-	} else {
-		while(md.next != 0){
-			lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
-			read(fd, &md, sizeof(struct metadata));
-			file_size += md.block_size;
-		}
-		return file_size;
-	}
-}
-
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
-	printf("getattr\n");
+	printf("getattr for %s\n", path);
 	int res = 0;
 	int file_found = 0;
 
+	fd = open(FILENAME, O_RDONLY);
+	lseek(fd, 4, SEEK_SET);
+	read(fd, &bitmap, sizeof(bitmap));
+
 	struct metadata md;
-	for (int i = 0; i < NUM_BLOCKS && strcmp(path, "/") != 0; ++i)
+	if (strcmp(path, "/") != 0)
 	{
-		if(bitmap[i] == 1){
-			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
-			read(fd, &md, sizeof(struct metadata));
-			if(strcmp(path, md.filename) == 0){
-				int file_found = 1;
-				break;
+		for (int i = 1; i < NUM_BLOCKS; i++)
+		{
+			if(bitmap[i] == 1){
+				lseek(fd, i*BLOCK_SIZE, SEEK_SET);
+				read(fd, &md, sizeof(struct metadata));
+				if(strcmp(path, md.filename) == 0){
+					file_found = 1;
+					break;
+				}
 			}
 		}
 	}
@@ -81,6 +74,12 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
 	}
+	else if (strcmp(path, hello_path) == 0) //TEMPORARY
+	{
+		stbuf->st_mode = S_IFREG | 0444;
+		stbuf->st_nlink = 1;
+		stbuf->st_size = strlen(hello_str);
+	}
 	else if (file_found == 1)
 	{
 		stbuf->st_mode = S_IFREG | 0444;
@@ -88,7 +87,9 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 		stbuf->st_birthtim = md.create_time; //creation time
 		stbuf->st_atim = md.access_time;	//access time
 		stbuf->st_mtim = md.modify_time;	//modification time	
-		stbuf->st_size = getSize(md);
+		stbuf->st_mode = S_IFREG | 0666;
+		stbuf->st_nlink = 1;
+		stbuf->st_size = md.file_size;
 	}
 	else
 	{
@@ -96,6 +97,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 		res = -ENOENT;
 	}
 		
+	close(fd);
 
 	return res;
 }
@@ -103,16 +105,33 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 						 off_t offset, struct fuse_file_info *fi)
 {
-	printf("readdir\n");
+	printf("readdir for %s\n", path);
 	(void)offset;
 	(void)fi;
+
+	fd = open(FILENAME, O_RDONLY);
+
+	struct metadata md;
 
 	if (strcmp(path, "/") != 0)
 		return -ENOENT;
 
-	//filler(buf, ".", NULL, 0);
+	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
 	filler(buf, hello_path + 1, NULL, 0);
+
+	for (int i = 1; i < NUM_BLOCKS; i++)
+	{
+		if(bitmap[i] == 1){
+			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			if(strcmp(md.filename, "") != 0){
+				filler(buf, md.filename + 1, NULL, 0);
+			}
+		}
+	}
+
+	close(fd);
 
 	return 0;
 }
@@ -233,14 +252,67 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	printf("write\n");
+	/* CODE IN TESTING, EITHER DELETE OR IGNORE
+	int file_start = 0;
+	int current_block;
+	int write_start;
+
+	fd = open(FILENAME, O_RDWR);
+
+	struct metadata md;
+	for (int i = 1; i < NUM_BLOCKS; i++)
+	{
+		if(bitmap[i] == 1){
+			lseek(fd, i * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			if(strcmp(path, md.filename) == 0){
+				file_start = i;
+				current_block = i;
+				break;
+			}
+		}
+	}
+
+	while(offset > USABLE_SPACE)
+	{
+		if(md.next == 0){
+			int nextAvailableBlock = 0;
+			for (int i = 0; i < NUM_BLOCKS; i++) {
+				if (bitmap[i] == 0){
+					nextAvailableBlock = i;
+					bitmap[i] = 1;
+					md.next = i;
+					lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
+					write(fd, &md, sizeof(struct metadata));
+					current_block = md.next;
+					lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
+					memset(&md, 0, sizeof(struct metadata));
+					break;
+				}
+			}
+			if (nextAvailableBlock == 0)
+				return -ENOMEM;
+		} else {
+			write_start = md.next;
+			lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+		}
+		offset -= USABLE_SPACE;
+	}
+
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata) + offset, SEEK_SET);
+	*/
 	return 0;
 }
 
 int hello_unlink(const char *path)
 {
 	printf("unlink\n");
+
+	fd = open(FILENAME, O_RDWR);
+
 	struct metadata md;
-	for (int i = 0; i < NUM_BLOCKS; ++i)
+	for (int i = 1; i < NUM_BLOCKS; i++)
 	{
 		if(bitmap[i] == 1){
 			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
@@ -253,11 +325,12 @@ int hello_unlink(const char *path)
 					read(fd, &md, sizeof(struct metadata));					
 				}
 				lseek(fd, 4, SEEK_SET);
-				write(fd, bitmap, sizeof(bitmap));
+				write(fd, &bitmap, sizeof(bitmap));
 				return 0;
 			}
 		}
 	}
+	close(fd);
 	printf("Could not remove the file %s\n", path);
 	return -ENOENT;
 }
@@ -267,11 +340,18 @@ int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	printf("create\n");
 	(void)mode;
 	(void)fi;
+
+	fd = open(FILENAME, O_RDWR);
+	lseek(fd, 4, SEEK_SET);
+	read(fd, &bitmap, sizeof(bitmap));
+
 	int nextAvailableBlock = 0;
 	for (int i = 0; i < NUM_BLOCKS; i++) {
 		if (bitmap[i] == 0){
 			nextAvailableBlock = i;
 			bitmap[i] = 1;
+			lseek(fd, 4, SEEK_SET);
+			write(fd, &bitmap, sizeof(bitmap));
 			break;
 		}
 	}
@@ -282,11 +362,13 @@ int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 		return -ENAMETOOLONG;
 	struct metadata md;
 	strcpy(md.filename, path);
-	md.block_size = 0;
+	md.file_size = 0;
 	clock_gettime(CLOCK_REALTIME, &md.create_time);
 	clock_gettime(CLOCK_REALTIME, &md.modify_time);
+	md.next = 0;
 	lseek(fd, offset, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
+	close(fd);
 	printf("create success\n");
 	return 0;
 }
