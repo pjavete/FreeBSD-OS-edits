@@ -63,7 +63,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	int file_found = 0;
 
 	struct metadata md;
-	for (int i = 0; i < NUM_BLOCKS && strcmp(path, "/") != 0; ++i)
+	for (int i = 1; i < NUM_BLOCKS; i++)
 	{
 		if(bitmap[i] == 1){
 			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
@@ -110,7 +110,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	if (strcmp(path, "/") != 0)
 		return -ENOENT;
 
-	//filler(buf, ".", NULL, 0);
+	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
 	filler(buf, hello_path + 1, NULL, 0);
 
