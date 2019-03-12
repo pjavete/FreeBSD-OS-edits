@@ -195,7 +195,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 			close(fd);
 			return -EINVAL;
 		} else {
-			int file_blocks = (file_size/USABLE_SPACE);
+			int file_blocks = (md.file_size/USABLE_SPACE);
 			int block_offset = ((int) offset/USABLE_SPACE);
 			if (file_blocks < block_offset){
 				close(fd);
@@ -271,7 +271,9 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	int current_block;
 	int write_start;
 	int write_size;
-	char * write_buf = buf;
+	char * write_buf;
+
+	strcpy(write_buf, buf);
 
 	fd = open(FILENAME, O_RDWR);
 
@@ -329,7 +331,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 		write_size = USABLE_SPACE - offset;
 		size = size - write_size;
 		write(fd, write_buf, write_size);
-		write_buf = write_buf + write_size
+		write_buf = write_buf + write_size;
 	} else {
 		write(fd, write_buf, size);
 		size = 0;
