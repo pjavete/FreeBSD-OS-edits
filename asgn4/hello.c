@@ -63,6 +63,8 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	int file_found = 0;
 	int block_num;
 
+	fd = open(FILENAME, O_RDONLY);
+
 	struct metadata md;
 	for (int i = 1; i < NUM_BLOCKS; i++)
 	{
@@ -103,6 +105,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 		res = -ENOENT;
 	}
 		
+	close(fd);
 
 	return res;
 }
@@ -113,6 +116,8 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	printf("readdir\n");
 	(void)offset;
 	(void)fi;
+
+	fd = open(FILENAME, O_RDONLY);
 
 	struct metadata md;
 
@@ -133,6 +138,8 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 			}
 		}
 	}
+
+	close(fd);
 
 	return 0;
 }
