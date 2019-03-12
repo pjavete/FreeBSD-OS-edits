@@ -399,6 +399,9 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	clock_gettime(CLOCK_REALTIME, &md.modify_time);
 	write(fd, &md, sizeof(struct metadata)); 
 
+	lseek(fd, 4, SEEK_SET);
+	write(fd, &bitmap, sizeof(bitmap));
+
 	close(fd);
 
 	return strlen(buf);
