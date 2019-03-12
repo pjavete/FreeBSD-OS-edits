@@ -120,7 +120,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
-	filler(buf, path + 1, NULL, 0);
+	filler(buf, hello_path + 1, NULL, 0);
 
 	for (int i = 1; i < NUM_BLOCKS; i++)
 	{
