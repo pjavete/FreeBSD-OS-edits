@@ -61,6 +61,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	printf("getattr\n");
 	int res = 0;
 	int file_found = 0;
+	int block_num;
 
 	struct metadata md;
 	for (int i = 1; i < NUM_BLOCKS; i++)
@@ -69,7 +70,8 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
 			read(fd, &md, sizeof(struct metadata));
 			if(strcmp(path, md.filename) == 0){
-				int file_found = 1;
+				file_found = 1;
+				block_num = i;
 				break;
 			}
 		}
