@@ -48,7 +48,7 @@ static int getSize(struct metadata md){
 		return file_size;
 	} else {
 		while(md.next != 0){
-			lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
+			lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
 			read(fd, &md, sizeof(struct metadata));
 			file_size += md.block_size;
 		}
@@ -68,14 +68,17 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	read(fd, &bitmap, sizeof(bitmap));
 
 	struct metadata md;
-	for (int i = 1; i < NUM_BLOCKS; i++)
+	if (strcmp(path, "/") != 0)
 	{
-		if(bitmap[i] == 1){
-			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
-			read(fd, &md, sizeof(struct metadata));
-			if(strcmp(path, md.filename) == 0){
-				file_found = 1;
-				break;
+		for (int i = 1; i < NUM_BLOCKS; i++)
+		{
+			if(bitmap[i] == 1){
+				lseek(fd, i*BLOCK_SIZE, SEEK_SET);
+				read(fd, &md, sizeof(struct metadata));
+				if(strcmp(path, md.filename) == 0){
+					file_found = 1;
+					break;
+				}
 			}
 		}
 	}
@@ -251,6 +254,7 @@ int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	md.block_size = 0;
 	clock_gettime(CLOCK_REALTIME, &md.create_time);
 	clock_gettime(CLOCK_REALTIME, &md.modify_time);
+	md.next = 0;
 	lseek(fd, offset, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
 	close(fd);
