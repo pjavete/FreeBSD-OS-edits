@@ -86,6 +86,8 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 		stbuf->st_birthtim = md.create_time; //creation time
 		stbuf->st_atim = md.access_time;	//access time
 		stbuf->st_mtim = md.modify_time;	//modification time	
+		stbuf->st_mode = S_IFREG | 0666;
+		stbuf->nlink = 1;
 		stbuf->st_size = getSize(md);
 	}
 	else
