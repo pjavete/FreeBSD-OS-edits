@@ -117,7 +117,6 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int hello_open(const char *path, struct fuse_file_info *fi)
 {
 	printf("open\n");
-	int open_status;
 	struct metadata md;
 	for(int i = 0; i < NUM_BLOCKS; i++){
 		if(bitmap[i] == 1){
@@ -136,21 +135,26 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 {
 	printf("read\n");
 	struct metadata md;
+	//size_t read_size;
+	int	read_in = 0;
 	(void)fi;
 	while(1){
 		lseek(fd, offset + sizeof(struct metadata), SEEK_SET);
+		read_size = USABLE_SPACE - offset;
 		if(size > USABLE_SPACE){
-			size = size - USABLE_SPACE;
-			read(fd, buf, USABLE_SPACE);
-			memcpy(buf, path, USABLE_SPACE);
+			size = size - (USABLE_SPACE + offset);
+			read(fd, buf, read_size);
+			memcpy(buf, path, read_size);
 		} else {
-			read(fd, buf, size);
-			memcpy(buf, path, size);
+			read(fd, buf, read_size);
+			memcpy(buf, path, read_size);
 			break;
 		}
 		if(md.next == 0 || size <= 0){
 			break;
 		}
+		offset = md.next * BLOCK_SIZE;
+		//read_in = sizeof(buf);
 	}
 	return sizeof(buf);
 }
