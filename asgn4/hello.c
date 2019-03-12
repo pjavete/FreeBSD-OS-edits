@@ -401,7 +401,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 
 	close(fd);
 
-	return sizeof(buf);
+	return strlen(buf);
 }
 
 int hello_unlink(const char *path)
