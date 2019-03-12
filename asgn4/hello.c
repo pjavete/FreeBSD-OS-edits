@@ -94,7 +94,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 		stbuf->st_atim = md.access_time;	//access time
 		stbuf->st_mtim = md.modify_time;	//modification time	
 		stbuf->st_mode = S_IFREG | 0666;
-		stbuf->nlink = 1;
+		stbuf->st_nlink = 1;
 		stbuf->st_size = getSize(md);
 	}
 	else
@@ -113,6 +113,8 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	printf("readdir\n");
 	(void)offset;
 	(void)fi;
+
+	struct metadata md;
 
 	if (strcmp(path, "/") != 0)
 		return -ENOENT;
