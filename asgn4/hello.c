@@ -285,6 +285,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 			read(fd, &md, sizeof(struct metadata));
 			if(strcmp(path, md.filename) == 0){
 				file_start = i;
+				write_start = i;
 				current_block = i;
 				break;
 			}
@@ -321,7 +322,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 		}
 		offset -= USABLE_SPACE;
 	}
-	lseek(fd, write_start * BLOCK_SIZE, SEEK_SET);
+	lseek(fd, write_start * BLOCK_SIZE + sizeof(struct metadata) + offset, SEEK_SET);
 	/*
 		If size is bigger than remaining space after offset
 		then we write in only that portion from out block, else
