@@ -138,7 +138,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		if(bitmap[i] == 1){
 			lseek(fd, i*BLOCK_SIZE, SEEK_SET);
 			read(fd, &md, sizeof(struct metadata));
-			if(!strcmp(md.filename, "")){
+			if(strcmp(md.filename, "") != 0){
 				filler(buf, md.filename + 1, NULL, 0);
 			}
 		}
