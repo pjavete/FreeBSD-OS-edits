@@ -266,7 +266,39 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 {
 	printf("write\n");
 	(void)fi;
+
+	int file_start = 0;
+	int bytes_written;
+
+	fd = open(FILENAME, O_RDWR);
+
+	struct metadata md;
+	for (int i = 1; i < NUM_BLOCKS; i++)
+	{
+		if(bitmap[i] == 1){
+			lseek(fd, i * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			if(strcmp(path, md.filename) == 0){
+				file_start = i;
+				break;
+			}
+		}
+	}
+
+	if (file_start == 0){
+		close(fd);
+		return -ENOENT;
+	}
+
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+	write(fd, &buf, size);
+	bytes_written += size;
+
+	close(fd);
+
+	return bytes_written;
 	
+	/*
 	int file_start = 0;
 	int current_block;
 	int write_start;
@@ -327,7 +359,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 		If size is bigger than remaining space after offset
 		then we write in only that portion from out block, else
 		we just write that little snippet
-	*/
+	*/ /*
 	if(size > (USABLE_SPACE - offset)){
 		write_size = USABLE_SPACE - offset;
 		size = size - write_size;
@@ -341,7 +373,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	/*
 		If the size that we want to write spans across mutliple
 		blocks of the file, then we go looking
-	*/
+	*/ /*
 	while(size > USABLE_SPACE){
 		if (md.next == 0)
 		{
@@ -406,6 +438,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	close(fd);
 
 	return strlen(buf);
+	*/
 }
 
 int hello_unlink(const char *path)
