@@ -332,8 +332,11 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	printf("write\n");
 	(void)fi;
 
+	int new_file_size;
 	int file_start = 0;
+	int byte_count = 0;
 	int bytes_written = 0;
+	char buffer[MAX_REQUEST_SIZE];
 
 	fd = open(FILENAME, O_RDWR);
 
@@ -355,15 +358,81 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 		return -ENOENT;
 	}
 
-	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata) + offset, SEEK_SET);
-	printf("data written: %s\n", buf);
-	write(fd, buf, size);
-	bytes_written += size;
-	md.file_size = offset + bytes_written;
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+	while (1)
+	{
+		if (read(fd, buffer + byte_count, USABLE_SPACE) == -1){
+			close(fd);
+			return -ENOBUFS;
+		}
+		byte_count += USABLE_SPACE;
+		if (md.next != 0){
+			lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+		}else{
+			break;
+		}
+	}
+
+	new_file_size = offset + size;
+	if (new_file_size > MAX_REQUEST_SIZE){
+		close(fd);
+		return -ENOBUFS;
+	}
+
+	memcpy(buffer + offset, buf, size);
+	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
+	read(fd, &md, sizeof(struct metadata));
+	md.file_size = new_file_size;
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	clock_gettime(CLOCK_REALTIME, &md.modify_time);
-	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
+
+	int current_block = file_start;
+	int next_block = file_start;
+
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+	while(1)
+	{
+		if (new_file_size > USABLE_SPACE){
+			if (md.next == 0){
+				int nextAvailableBlock = 0;
+				for (int i = 1; i < NUM_BLOCKS; i++) {
+					if (bitmap[i] == 0){
+						nextAvailableBlock = i;
+						bitmap[i] = 1;
+						md.next = i;
+						lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
+						write(fd, &md, sizeof(struct metadata));
+						next_block = md.next;
+						memset(&md, 0, sizeof(struct metadata));
+						break;
+					}
+				}
+				if (nextAvailableBlock == 0){
+					close(fd);
+					return -ENOMEM;
+				}
+			}else{
+				lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
+				read(fd, &md, sizeof(struct metadata));
+				next_block = md.next;
+				lseek(fd, next_block * BLOCK_SIZE, SEEK_SET);
+				read(fd, &md, sizeof(struct metadata));
+			}
+			lseek(fd, (current_block * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+			write(fd, buffer + bytes_written, USABLE_SPACE);
+			bytes_written += USABLE_SPACE;
+			new_file_size -= USABLE_SPACE;
+			current_block = next_block;
+		}else{
+			lseek(fd, (current_block * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+			write(fd, buffer + bytes_written, new_file_size);
+			bytes_written += new_file_size;
+			new_file_size = 0;
+			break;
+		}
+	}
 
 	close(fd);
 
