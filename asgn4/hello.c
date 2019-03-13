@@ -197,7 +197,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	printf("buffer = %s\n", buffer);
 	//memcpy(file, buffer, USABLE_SPACE);
 	//memcpy(buf, buffer + offset, size);
-	strncpy(buf, buffer, MAX_REQUEST_SIZE);
+	//strncpy(buf, buffer, MAX_REQUEST_SIZE);
 	printf("buf = %s\n", buf);
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
