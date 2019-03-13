@@ -386,6 +386,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	md.file_size = new_file_size;
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	clock_gettime(CLOCK_REALTIME, &md.modify_time);
+	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
 
 	int current_block = file_start;
