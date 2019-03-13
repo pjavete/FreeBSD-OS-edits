@@ -41,7 +41,7 @@ struct metadata {
 	int next;
 };
 
-#define MIN_BLOCK_SIZE (sizeof(struct metadata) + 1);
+#define MIN_BLOCK_SIZE (sizeof(struct metadata) + 1)
 #define USABLE_SPACE (BLOCK_SIZE - sizeof(struct metadata))
 
 static int hello_getattr(const char *path, struct stat *stbuf)
