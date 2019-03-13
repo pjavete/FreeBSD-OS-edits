@@ -199,7 +199,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	printf("read2\n");
 	//memcpy(file, buffer, USABLE_SPACE);
 	//memcpy(buf, buffer + offset, size);
-	strncpy(buf, buffer, MAX_REQUEST_SIZE);
+	memcpy(buf, buffer + offset, size);
 	printf("buf = %s\n", buf);
 	printf("read3\n");
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
