@@ -170,6 +170,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 
 	int file_start = 0;
 	int bytes_read = 0;
+	char * file;
 	char * buffer;
 
 	struct metadata md;
@@ -193,7 +194,8 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata) + offset, SEEK_SET);
 	read(fd, &buffer, size);
 	bytes_read += size;
-	strcpy(buf, buffer);
+	strcat(file, buffer);
+	memcpy(buf, file + offset, size);
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
