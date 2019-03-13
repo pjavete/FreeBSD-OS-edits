@@ -334,7 +334,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 
 	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata) + offset, SEEK_SET);
 	printf("data written: %s\n", buf);
-	write(fd, &buf, size);
+	write(fd, buf, size);
 	bytes_written += size;
 	md.file_size = offset + bytes_written;
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
@@ -344,7 +344,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 
 	close(fd);
 
-	printf("bytes written: %d", bytes_written);
+	printf("bytes written: %d\n", bytes_written);
 
 	return bytes_written;
 	
