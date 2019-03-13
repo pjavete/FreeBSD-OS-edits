@@ -164,9 +164,45 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 					  struct fuse_file_info *fi)
 {
 	printf("read\n");
+	(void)fi;
 
 	fd = open(FILENAME, O_RDWR);
 
+	int file_start = 0;
+	int bytes_read = 0;
+	char * buffer;
+
+	struct metadata md;
+	for (int i = 1; i < NUM_BLOCKS; i++)
+	{
+		if(bitmap[i] == 1){
+			lseek(fd, i * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			if(strcmp(path, md.filename) == 0){
+				file_start = i;
+				break;
+			}
+		}
+	}
+
+	if (file_start == 0){
+		close(fd);
+		return -ENOENT;
+	}
+
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata) + offset);
+	read(fd, &buffer, size);
+	bytes_read += size;
+	strcpy(buf, buffer);
+	clock_gettime(CLOCK_REALTIME, &md.access_time);
+	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
+	write(fd, &md, sizeof(struct metadata));
+
+	close(fd);
+
+	return bytes_read;
+
+	/*
 	size_t read_size;
 	char *block_buffer;
 	(void)fi;
@@ -179,7 +215,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 		Checks to see if the total size of the file minus the offset
 		is smaller than the size we are trying to read and if so we
 		return an error that an argument is invalid
-	*/ 
+	*/ /*
 	if((int) size > (md.file_size - (int) offset)){
 		close(fd);
 		return -EINVAL;
@@ -189,7 +225,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 		Now checks to see if the offset starts in a block of the file
 		other than the first block and sets the file offset to the
 		start of the file that the offset is in
-	*/ 
+	*/ /*
 	if((int) offset > USABLE_SPACE){
 		if (md.next == 0){
 			close(fd);
@@ -222,7 +258,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 		If size is bigger than remaining space after offset
 		then we read in only that portion from out block, else
 		we just read that little snippet
-	*/
+	*/ /*
 	if(size > (USABLE_SPACE - offset)){
 		read_size = USABLE_SPACE - offset;
 		size = size - read_size;
@@ -236,7 +272,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	/*
 		If the size that we want to read spans across mutliple
 		blocks of the file, then we go looking
-	*/
+	*/ /*
 	while(md.next != 0 && size > 0){
 		lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
 		read(fd, &md, sizeof(struct metadata));	
@@ -256,7 +292,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	read(fd, &md, sizeof(struct metadata));
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	write(fd, &md, sizeof(struct metadata)); 
-
+	*/
 	close(fd);
 
 	return sizeof(buf);
@@ -290,10 +326,12 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 		return -ENOENT;
 	}
 
-	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata) + offset, SEEK_SET);
 	write(fd, &buf, size);
 	bytes_written += size;
 	md.file_size = offset + bytes_written;
+	clock_gettime(CLOCK_REALTIME, &md.access_time);
+	clock_gettime(CLOCK_REALTIME, &md.modify_time);
 	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
 
