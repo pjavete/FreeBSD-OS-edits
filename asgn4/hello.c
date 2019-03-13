@@ -185,6 +185,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 			}
 		}
 	}
+	printf("read1\n");
 
 	if (file_start == 0){
 		close(fd);
@@ -195,6 +196,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	read(fd, &buffer, USABLE_SPACE);
 	memcpy(file, buffer, USABLE_SPACE);
 	memcpy(buf, file + offset, size);
+	printf("read2\n");
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
