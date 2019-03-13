@@ -15,6 +15,7 @@
 #define NUM_BLOCKS 100
 #define MAX_BLOCKS ((BLOCK_SIZE - 4) / 4)
 #define MAX_FILENAME_LENGTH 20
+#define MAX_REQUEST_SIZE (128 * 1024)
 
 #include <fuse.h>
 #include <stdio.h>
@@ -196,7 +197,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	printf("buffer = %s\n", buffer);
 	//memcpy(file, buffer, USABLE_SPACE);
 	//memcpy(buf, buffer + offset, size);
-	strncpy(buf, buffer, sizeof(buf));
+	strncpy(buf, buffer, MAX_REQUEST_SIZE);
 	printf("buf = %s\n", buf);
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
