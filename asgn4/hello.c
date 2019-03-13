@@ -190,7 +190,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 		return -ENOENT;
 	}
 
-	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata) + offset);
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata) + offset, SEEK_SET);
 	read(fd, &buffer, size);
 	bytes_read += size;
 	strcpy(buf, buffer);
