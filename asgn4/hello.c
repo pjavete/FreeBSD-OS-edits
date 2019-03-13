@@ -11,7 +11,7 @@
 #define FUSE_USE_VERSION 26
 #define MAGIC_NUMBER 0xfa19283e
 #define FILENAME "./FILE_FS"
-#define BLOCK_SIZE 65
+#define BLOCK_SIZE 70
 #define NUM_BLOCKS 10
 #define MAX_BLOCKS ((BLOCK_SIZE - 4) / 4)
 #define MAX_FILENAME_LENGTH 20
