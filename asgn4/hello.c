@@ -194,6 +194,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 
 	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
 	read(fd, buffer, USABLE_SPACE);
+	printf("read1.5\n");
 	//memcpy(file, buffer, USABLE_SPACE);
 	memcpy(buf, buffer + offset, size);
 	printf("read2\n");
