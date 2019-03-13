@@ -268,7 +268,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	(void)fi;
 
 	int file_start = 0;
-	int bytes_written;
+	int bytes_written = 0;
 
 	fd = open(FILENAME, O_RDWR);
 
@@ -293,6 +293,9 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
 	write(fd, &buf, size);
 	bytes_written += size;
+	md.file_size = offset + bytes_written;
+	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
+	write(fd, &md, sizeof(struct metadata));
 
 	close(fd);
 
