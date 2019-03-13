@@ -192,10 +192,11 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	}
 
 	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
-	read(fd, buffer, USABLE_SPACE);
+	read(fd, buffer, size);
+	printf("buffer = %s\n", buffer);
 	//memcpy(file, buffer, USABLE_SPACE);
 	//memcpy(buf, buffer + offset, size);
-	strcpy(buf, buffer);
+	strncpy(buf, buffer, sizeof(buf));
 	printf("buf = %s\n", buf);
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
