@@ -172,7 +172,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	int file_start = 0;
 	int bytes_read = 0;
 	char * file;
-	char * buffer;
+	char buffer[MAX_REQUEST_SIZE];
 
 	struct metadata md;
 	for (int i = 1; i < NUM_BLOCKS; i++)
@@ -194,7 +194,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 
 	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
 	printf("read1\n");
-	read(fd, &buffer, size);
+	read(fd, buffer, size);
 	printf("buffer = %s\n", buffer);
 	printf("read2\n");
 	//memcpy(file, buffer, USABLE_SPACE);
