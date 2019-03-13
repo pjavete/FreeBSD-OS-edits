@@ -212,10 +212,14 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	read(fd, buffer, USABLE_SPACE);
 	printf("buffer = %s\n", buffer);
 	printf("read2\n");
-	if (offset + size > file_size){
-		size = file_size - offset;
+	if (offset < file_size)
+	{
+		if (offset + size > file_size)
+			size = file_size - offset;
+		memcpy(buf, buffer + offset, size);
 	}
-	memcpy(buf, buffer + offset, size);
+	else
+		size = 0;
 	printf("buf = %s\n", buf);
 	printf("read3\n");
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
