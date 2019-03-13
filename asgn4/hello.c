@@ -333,6 +333,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	}
 
 	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata) + offset, SEEK_SET);
+	printf("data written: %s\n", buf);
 	write(fd, &buf, size);
 	bytes_written += size;
 	md.file_size = offset + bytes_written;
@@ -342,6 +343,8 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 	write(fd, &md, sizeof(struct metadata));
 
 	close(fd);
+
+	printf("bytes written: %d", bytes_written);
 
 	return bytes_written;
 	
