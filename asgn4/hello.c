@@ -209,7 +209,6 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 			break;
 		}
 	}
-	read(fd, buffer, USABLE_SPACE);
 	printf("buffer = %s\n", buffer);
 	printf("read2\n");
 	if (offset < file_size)
