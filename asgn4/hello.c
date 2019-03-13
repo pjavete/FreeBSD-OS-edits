@@ -169,9 +169,9 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 
 	fd = open(FILENAME, O_RDWR);
 
+	int file_size;
 	int file_start = 0;
-	int bytes_read = 0;
-	char * file;
+	int byte_count = 0;
 	char buffer[MAX_REQUEST_SIZE];
 
 	struct metadata md;
@@ -181,6 +181,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 			lseek(fd, i * BLOCK_SIZE, SEEK_SET);
 			read(fd, &md, sizeof(struct metadata));
 			if(strcmp(path, md.filename) == 0){
+				file_size = md.file_size;
 				file_start = i;
 				break;
 			}
@@ -194,11 +195,26 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 
 	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
 	printf("read1\n");
-	read(fd, buffer, size);
+	while (1)
+	{
+		if (read(fd, buffer + byte_count, USABLE_SPACE) == -1){
+			close(fd);
+			return -ENOBUFS;
+		}
+		byte_count += USABLE_SPACE;
+		if (md.next != 0){
+			lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+		}else{
+			break;
+		}
+	}
+	read(fd, buffer, USABLE_SPACE);
 	printf("buffer = %s\n", buffer);
 	printf("read2\n");
-	//memcpy(file, buffer, USABLE_SPACE);
-	//memcpy(buf, buffer + offset, size);
+	if (offset + size > file_size){
+		size = file_size - offset;
+	}
 	memcpy(buf, buffer + offset, size);
 	printf("buf = %s\n", buf);
 	printf("read3\n");
