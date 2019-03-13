@@ -191,9 +191,8 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 		return -ENOENT;
 	}
 
-	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata) + offset, SEEK_SET);
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
 	read(fd, &buffer, size);
-	bytes_read += size;
 	memcpy(file, buffer, sizeof(buffer));
 	memcpy(buf + sizeof(buf), file + offset, size);
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
@@ -202,7 +201,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 
 	close(fd);
 
-	return bytes_read;
+	return size;
 
 	/*
 	size_t read_size;
@@ -294,10 +293,10 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	read(fd, &md, sizeof(struct metadata));
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	write(fd, &md, sizeof(struct metadata)); 
-	*/
+	
 	close(fd);
 
-	return sizeof(buf);
+	return sizeof(buf);*/
 }
 
 int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
