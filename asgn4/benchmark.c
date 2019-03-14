@@ -45,7 +45,7 @@ int main(){
 	for(int i = 0; i < 100; i++){
 		sprintf(filename, "%s%d", file, i);
 		fp = fopen(filename, "a");
-		for (int x = 0; x < i+1; x++){
+		for (int x = 0; x < (i*2)+1; x++){
 			fprintf(fp, "This is our test string. Hello grader! :)\n");
 		}
 		fclose(fp);
@@ -111,7 +111,7 @@ int main(){
 	for(int i = 0; i < 98; i++){
 		sprintf(filename, "%s%d", file, i);
 		fp = fopen(filename, "a");
-		for (int x = 0; x < i+1; x++){
+		for (int x = 0; x < (i*2)+1; x++){
 			fprintf(fp, "This is our test string. Hello grader! :)\n");
 		}
 		fclose(fp);
@@ -148,7 +148,10 @@ int main(){
 	printf("---------------------------\n");
 	printf("Some Statistics:\n");
 	long diffCreate = ((diffFUSECreate - diffBSDCreate) / diffBSDCreate)*100;
-	printf("Our Fuse file system is about %ld%% slower than the FreeBSD file system\n", diffCreate);
+	long diffWrite = ((diffFUSEWrite - diffBSDWrite) / diffBSDWrite)*100;
+	long diffRead = ((diffFUSERead - diffBSDRead) / diffBSDRead)*100;
+	long diff = (diffCreate + diffWrite + diffRead)/3;
+	printf("Our Fuse file system is about %ld%% slower than the FreeBSD file system\n", diff);
 	printf("---------------------------\n");
 	printf("End of benchmark\n");
 	return 0;
