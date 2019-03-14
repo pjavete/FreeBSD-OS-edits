@@ -26,9 +26,6 @@
 #include <time.h>
 #include <unistd.h>
 
-static const char *hello_str = "Hello World!\n";
-static const char *hello_path = "/hello";
-
 static int bitmap[NUM_BLOCKS];
 static int fd;
 
@@ -76,12 +73,6 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
 	}
-	else if (strcmp(path, hello_path) == 0) //TEMPORARY
-	{
-		stbuf->st_mode = S_IFREG | 0444;
-		stbuf->st_nlink = 1;
-		stbuf->st_size = strlen(hello_str);
-	}
 	else if (file_found == 1)
 	{
 		stbuf->st_mode = S_IFREG | 0444;
@@ -122,7 +113,6 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
-	filler(buf, hello_path + 1, NULL, 0);
 
 	for (int i = 1; i < NUM_BLOCKS; i++)
 	{
