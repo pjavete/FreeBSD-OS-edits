@@ -12,9 +12,8 @@ benchmark.o: benchmark.c
 mount:
 	kldload fuse
 	mkdir newHelloFS
-	./hello newHelloFS
+	./hello -f newHelloFS
 
 clean:
-	rm hello
+	rm hello FILE_FS benchmark benchmark.o
 	rm -rf newHelloFS
-	rm FILE_FS
