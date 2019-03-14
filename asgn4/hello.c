@@ -195,7 +195,6 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	}
 
 	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
-	printf("read1\n");
 	while (1)
 	{
 		if (read(fd, buffer + byte_count, USABLE_SPACE) == -1){
@@ -211,7 +210,6 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 		}
 	}
 	printf("buffer = %s\n", buffer);
-	printf("read2\n");
 	if (offset < file_size)
 	{
 		if (offset + size > file_size)
@@ -221,7 +219,6 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	else
 		size = 0;
 	printf("buf = %s\n", buf);
-	printf("read3\n");
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
