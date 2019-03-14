@@ -130,6 +130,110 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
+static int hello_truncate(const char *path, off_t size)
+{
+	printf("truncate\n");
+
+	int file_size;
+	int file_start = 0;
+	struct metadata md;
+
+	fd = open(FILENAME, O_RDONLY);
+	for(int i = 1; i < NUM_BLOCKS; i++){
+		if(bitmap[i] == 1){
+			lseek(fd, BLOCK_SIZE * i, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			if(strcmp(md.filename, path) == 0){
+				file_start = i;
+				file_size = md.file_size;
+				md.file_size = size;
+				clock_gettime(CLOCK_REALTIME, &md.access_time);
+				clock_gettime(CLOCK_REALTIME, &md.modify_time);
+				lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
+				write(fd, &md, sizeof(struct metadata));
+				break;
+			}
+		}
+	}
+
+	if (file_start == 0){
+		close(fd);
+		return -ENOENT;
+	}
+
+	int current_block = file_start;
+	int next_block = file_start;
+
+	if (size < file_size){
+		while(1)
+		{
+			lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			next_block = md.next;
+			if (size > USABLE_SPACE){
+				size -= USABLE_SPACE;
+			}else{
+				break;
+			}
+			current_block = next_block;
+		}
+		current_block = next_block;
+		while(1)
+		{
+			if (current_block == 0){
+				break;
+			}else{
+				lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
+				read(fd, &md, sizeof(struct metadata));
+				next_block = md.next;
+				bitmap[current_block] = 0;
+			}
+			current_block = next_block;
+		}
+	}
+	else if (size > file_size){
+		while(1)
+		{
+			lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			if (size > USABLE_SPACE){
+				if (md.next == 0){
+					int nextAvailableBlock = 0;
+					for (int i = 1; i < NUM_BLOCKS; i++) {
+						if (bitmap[i] == 0){
+							nextAvailableBlock = i;
+							bitmap[i] = 1;
+							md.next = i;
+							lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
+							write(fd, &md, sizeof(struct metadata));
+							next_block = md.next;
+							memset(&md, 0, sizeof(struct metadata));
+							break;
+						}
+					}
+					if (nextAvailableBlock == 0){
+						close(fd);
+						return -ENOMEM;
+					}
+				}else{
+					next_block = md.next;
+					lseek(fd, next_block * BLOCK_SIZE, SEEK_SET);
+				}
+				current_block = next_block;
+				size -= USABLE_SPACE;
+			}else{
+				break;
+			}
+		}
+	}
+
+	lseek(fd, 4, SEEK_SET);
+	write(fd, &bitmap, sizeof(bitmap));
+
+	close(fd);
+	return 0;
+}
+
 static int hello_open(const char *path, struct fuse_file_info *fi)
 {
 	printf("open\n");
@@ -209,6 +313,8 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	else
 		size = 0;
 	printf("buf = %s\n", buf);
+	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
+	read(fd, &md, sizeof(struct metadata));
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
 	write(fd, &md, sizeof(struct metadata));
@@ -223,6 +329,8 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	printf("write\n");
+	printf("write size = %zu\n", size);
+	printf("write offset = %ld\n", offset);
 	(void)fi;
 
 	int new_file_size;
@@ -334,7 +442,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 
 	printf("bytes written: %d\n", bytes_written);
 
-	return bytes_written;
+	return size;
 }
 
 int hello_unlink(const char *path)
@@ -427,6 +535,7 @@ int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 static struct fuse_operations hello_oper = {
 	.getattr = hello_getattr,
 	.readdir = hello_readdir,
+	.truncate = hello_truncate,
 	.open = hello_open,
 	.read = hello_read,
 	.unlink = hello_unlink,
