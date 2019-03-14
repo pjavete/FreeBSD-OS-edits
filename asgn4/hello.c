@@ -140,7 +140,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
-static int hello_truncate(const char *path, off_t offset, struct fuse_file_info *fi)
+static int hello_truncate(const char *path, off_t offset)
 {
 	printf("truncate\n");
 	return 0;
