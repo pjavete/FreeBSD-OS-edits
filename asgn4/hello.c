@@ -339,8 +339,8 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	printf("write\n");
-	printf("write size = %zu", size);
-	printf("write offset = %ld", offset);
+	printf("write size = %zu\n", size);
+	printf("write offset = %ld\n", offset);
 	(void)fi;
 
 	int new_file_size;
@@ -452,7 +452,7 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 
 	printf("bytes written: %d\n", bytes_written);
 
-	return bytes_written;
+	return size;
 }
 
 int hello_unlink(const char *path)
