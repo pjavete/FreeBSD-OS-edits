@@ -11,10 +11,11 @@
 #define FUSE_USE_VERSION 26
 #define MAGIC_NUMBER 0xfa19283e
 #define FILENAME "./FILE_FS"
-#define BLOCK_SIZE 4096
-#define NUM_BLOCKS 100
+#define BLOCK_SIZE 100
+#define NUM_BLOCKS 10
 #define MAX_BLOCKS ((BLOCK_SIZE - 4) / 4)
 #define MAX_FILENAME_LENGTH 20
+#define MAX_REQUEST_SIZE (128 * 1024)
 
 #include <fuse.h>
 #include <stdio.h>
@@ -40,6 +41,7 @@ struct metadata {
 	int next;
 };
 
+#define MIN_BLOCK_SIZE (sizeof(struct metadata) + 1)
 #define USABLE_SPACE (BLOCK_SIZE - sizeof(struct metadata))
 
 static int hello_getattr(const char *path, struct stat *stbuf)
@@ -164,116 +166,80 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 					  struct fuse_file_info *fi)
 {
 	printf("read\n");
+	(void)fi;
 
 	fd = open(FILENAME, O_RDWR);
 
-	size_t read_size;
-	char *block_buffer;
-	(void)fi;
-	off_t saved_offset = lseek(fd, 0, SEEK_CUR);
+	int file_size;
+	int file_start = 0;
+	int byte_count = 0;
+	char buffer[MAX_REQUEST_SIZE];
 
 	struct metadata md;
-	read(fd, &md, sizeof(struct metadata));
-
-	/*
-		Checks to see if the total size of the file minus the offset
-		is smaller than the size we are trying to read and if so we
-		return an error that an argument is invalid
-	*/ 
-	if((int) size > (md.file_size - (int) offset)){
-		close(fd);
-		return -EINVAL;
-	}
-
-	/*
-		Now checks to see if the offset starts in a block of the file
-		other than the first block and sets the file offset to the
-		start of the file that the offset is in
-	*/ 
-	if((int) offset > USABLE_SPACE){
-		if (md.next == 0){
-			close(fd);
-			return -EINVAL;
-		} else {
-			int file_blocks = (md.file_size/USABLE_SPACE);
-			int block_offset = ((int) offset/USABLE_SPACE);
-			if (file_blocks < block_offset){
-				close(fd);
-				return -EINVAL;
-			} else {
-				for (int i = 1; i < file_blocks; i++){
-					lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
-					if (i == block_offset){
-						offset = offset - (off_t) (i*USABLE_SPACE);
-						break;
-					}
-					read(fd, &md, sizeof(struct metadata));
-				}
+	for (int i = 1; i < NUM_BLOCKS; i++)
+	{
+		if(bitmap[i] == 1){
+			lseek(fd, i * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			if(strcmp(path, md.filename) == 0){
+				file_size = md.file_size;
+				file_start = i;
+				break;
 			}
 		}
-	} else {
-		lseek(fd, saved_offset, SEEK_SET);
 	}
 
-	read(fd, &md, sizeof(struct metadata));
-	lseek(fd, offset + sizeof(struct metadata), SEEK_CUR);
-
-	/*
-		If size is bigger than remaining space after offset
-		then we read in only that portion from out block, else
-		we just read that little snippet
-	*/
-	if(size > (USABLE_SPACE - offset)){
-		read_size = USABLE_SPACE - offset;
-		size = size - read_size;
-		read(fd, block_buffer, read_size);
-		strcat(buf, block_buffer);
-	} else {
-		read(fd, buf, size);
-		size = 0;
+	if (file_start == 0){
+		close(fd);
+		return -ENOENT;
 	}
 
-	/*
-		If the size that we want to read spans across mutliple
-		blocks of the file, then we go looking
-	*/
-	while(md.next != 0 && size > 0){
-		lseek(fd, md.next*BLOCK_SIZE, SEEK_SET);
-		read(fd, &md, sizeof(struct metadata));	
-		if(size > USABLE_SPACE){
-			size = size - USABLE_SPACE;
-			read(fd, block_buffer, USABLE_SPACE);
-			strcat(buf, block_buffer);
-		} else {
-			read(fd, buf, size);
-			strcat(buf, block_buffer);
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+	while (1)
+	{
+		if (read(fd, buffer + byte_count, USABLE_SPACE) == -1){
+			close(fd);
+			return -ENOBUFS;
+		}
+		byte_count += USABLE_SPACE;
+		if (md.next != 0){
+			lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+		}else{
 			break;
 		}
-		offset = md.next * BLOCK_SIZE;
-		//read_in = sizeof(buf);
 	}
-	lseek(fd, saved_offset, SEEK_SET);
-	read(fd, &md, sizeof(struct metadata));
+	printf("buffer = %s\n", buffer);
+	if (offset < file_size)
+	{
+		if (offset + size > file_size)
+			size = file_size - offset;
+		memcpy(buf, buffer + offset, size);
+	}
+	else
+		size = 0;
+	printf("buf = %s\n", buf);
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
-	write(fd, &md, sizeof(struct metadata)); 
+	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
+	write(fd, &md, sizeof(struct metadata));
 
 	close(fd);
 
-	return sizeof(buf);
+	printf("read success\n");
+
+	return size;
 }
 
 int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	printf("write\n");
 	(void)fi;
-	
-	int file_start = 0;
-	int current_block;
-	int write_start;
-	int write_size;
-	char * write_buf;
 
-	strcpy(write_buf, buf);
+	int new_file_size;
+	int file_start = 0;
+	int byte_count = 0;
+	int bytes_written = 0;
+	char buffer[MAX_REQUEST_SIZE];
 
 	fd = open(FILENAME, O_RDWR);
 
@@ -285,123 +251,100 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 			read(fd, &md, sizeof(struct metadata));
 			if(strcmp(path, md.filename) == 0){
 				file_start = i;
-				current_block = i;
 				break;
 			}
 		}
 	}
 
-	while(offset > USABLE_SPACE)
+	if (file_start == 0){
+		close(fd);
+		return -ENOENT;
+	}
+
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+	while (1)
 	{
-		if(md.next == 0){
-			int nextAvailableBlock = 0;
-			for (int i = 1; i < NUM_BLOCKS; i++) {
-				if (bitmap[i] == 0){
-					nextAvailableBlock = i;
-					bitmap[i] = 1;
-					md.next = i;
-					lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
-					write(fd, &md, sizeof(struct metadata));
-					current_block = md.next;
-					write_start = md.next;
-					lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
-					memset(&md, 0, sizeof(struct metadata));
-					break;
-				}
-			}
-			if (nextAvailableBlock == 0){
-				close(fd);
-				return -ENOMEM;
-			}
-		} else {
-			current_block = md.next;
-			write_start = md.next;
+		if (read(fd, buffer + byte_count, USABLE_SPACE) == -1){
+			close(fd);
+			return -ENOBUFS;
+		}
+		byte_count += USABLE_SPACE;
+		if (md.next != 0){
 			lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
 			read(fd, &md, sizeof(struct metadata));
+		}else{
+			break;
 		}
-		offset -= USABLE_SPACE;
-	}
-	lseek(fd, write_start * BLOCK_SIZE, SEEK_SET);
-	/*
-		If size is bigger than remaining space after offset
-		then we write in only that portion from out block, else
-		we just write that little snippet
-	*/
-	if(size > (USABLE_SPACE - offset)){
-		write_size = USABLE_SPACE - offset;
-		size = size - write_size;
-		write(fd, write_buf, write_size);
-		write_buf = write_buf + write_size;
-	} else {
-		write(fd, write_buf, size);
-		size = 0;
 	}
 
-	/*
-		If the size that we want to write spans across mutliple
-		blocks of the file, then we go looking
-	*/
-	while(size > USABLE_SPACE){
-		if (md.next == 0)
-		{
-			int nextAvailableBlock = 0;
-			for (int i = 1; i < NUM_BLOCKS; i++) {
-				if (bitmap[i] == 0){
-					nextAvailableBlock = i;
-					bitmap[i] = 1;
-					md.next = i;
-					lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
-					write(fd, &md, sizeof(struct metadata));
-					current_block = md.next;
-					lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
-					write(fd, write_buf, USABLE_SPACE);
-					write_buf += USABLE_SPACE;
-					memset(&md, 0, sizeof(struct metadata));
-					break;
-				}
-			}
-			if (nextAvailableBlock == 0){
-				close(fd);
-				return -ENOMEM;
-			}
-		}
-		else
-		{
-			lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
-			current_block = md.next;
-			read(fd, &md, sizeof(struct metadata));	
-			write(fd, write_buf, USABLE_SPACE);
-			write_buf += USABLE_SPACE;
-		}
-		size -= USABLE_SPACE;
+	new_file_size = offset + size;
+	if (new_file_size > MAX_REQUEST_SIZE){
+		close(fd);
+		return -ENOBUFS;
 	}
-	if (size > 0){
-		int nextAvailableBlock = 0;
-		for (int i = 1; i < NUM_BLOCKS; i++) {
-			if (bitmap[i] == 0){
-				nextAvailableBlock = i;
-				bitmap[i] = 1;
-				md.next = i;
-				lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
-				write(fd, &md, sizeof(struct metadata));
-				lseek(fd, md.next * BLOCK_SIZE, SEEK_SET);
-				write(fd, write_buf, sizeof(write_buf));
-				break;
-			}
-		}
-		if (nextAvailableBlock == 0){
-			close(fd);
-			return -ENOMEM;
-		}
-	}
-	lseek(fd, file_start, SEEK_SET);
+
+	memcpy(buffer + offset, buf, size);
+	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
 	read(fd, &md, sizeof(struct metadata));
+	md.file_size = new_file_size;
+	clock_gettime(CLOCK_REALTIME, &md.access_time);
 	clock_gettime(CLOCK_REALTIME, &md.modify_time);
-	write(fd, &md, sizeof(struct metadata)); 
+	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
+	write(fd, &md, sizeof(struct metadata));
+
+	int current_block = file_start;
+	int next_block = file_start;
+
+	lseek(fd, (file_start * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+	while(1)
+	{
+		if (new_file_size > USABLE_SPACE){
+			if (md.next == 0){
+				int nextAvailableBlock = 0;
+				for (int i = 1; i < NUM_BLOCKS; i++) {
+					if (bitmap[i] == 0){
+						nextAvailableBlock = i;
+						bitmap[i] = 1;
+						md.next = i;
+						lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
+						write(fd, &md, sizeof(struct metadata));
+						next_block = md.next;
+						memset(&md, 0, sizeof(struct metadata));
+						break;
+					}
+				}
+				if (nextAvailableBlock == 0){
+					close(fd);
+					return -ENOMEM;
+				}
+			}else{
+				lseek(fd, current_block * BLOCK_SIZE, SEEK_SET);
+				read(fd, &md, sizeof(struct metadata));
+				next_block = md.next;
+				lseek(fd, next_block * BLOCK_SIZE, SEEK_SET);
+				read(fd, &md, sizeof(struct metadata));
+			}
+			lseek(fd, (current_block * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+			write(fd, buffer + bytes_written, USABLE_SPACE);
+			bytes_written += USABLE_SPACE;
+			new_file_size -= USABLE_SPACE;
+			current_block = next_block;
+		}else{
+			lseek(fd, (current_block * BLOCK_SIZE) + sizeof(struct metadata), SEEK_SET);
+			write(fd, buffer + bytes_written, new_file_size);
+			bytes_written += new_file_size;
+			new_file_size = 0;
+			break;
+		}
+	}
+	lseek(fd, 4, SEEK_SET);
+	write(fd, &bitmap, sizeof(bitmap));
 
 	close(fd);
 
-	return sizeof(buf);
+	printf("bytes written: %d\n", bytes_written);
+
+	return bytes_written;
 }
 
 int hello_unlink(const char *path)
@@ -409,6 +352,9 @@ int hello_unlink(const char *path)
 	printf("unlink\n");
 
 	fd = open(FILENAME, O_RDWR);
+
+	lseek(fd, 4, SEEK_SET);
+	read(fd, &bitmap, sizeof(bitmap));
 
 	struct metadata md;
 	for (int i = 1; i < NUM_BLOCKS; i++)
@@ -440,13 +386,25 @@ int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	printf("create\n");
 	(void)mode;
 	(void)fi;
+	struct metadata md;
 
 	fd = open(FILENAME, O_RDWR);
 	lseek(fd, 4, SEEK_SET);
 	read(fd, &bitmap, sizeof(bitmap));
 
+	for (int i = 1; i < NUM_BLOCKS; i++) {
+		if (bitmap[i] == 1){
+			lseek(fd, i * BLOCK_SIZE, SEEK_SET);
+			read(fd, &md, sizeof(struct metadata));
+			if(strcmp(path, md.filename) == 0){
+				close(fd);
+				return -EEXIST;
+			}
+		}
+	}
+
 	int nextAvailableBlock = 0;
-	for (int i = 0; i < NUM_BLOCKS; i++) {
+	for (int i = 1; i < NUM_BLOCKS; i++) {
 		if (bitmap[i] == 0){
 			nextAvailableBlock = i;
 			bitmap[i] = 1;
@@ -464,7 +422,6 @@ int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 		close(fd);
 		return -ENAMETOOLONG;
 	}
-	struct metadata md;
 	strcpy(md.filename, path);
 	md.file_size = 0;
 	clock_gettime(CLOCK_REALTIME, &md.create_time);
@@ -492,6 +449,11 @@ int main(int argc, char *argv[])
 	if (NUM_BLOCKS > MAX_BLOCKS)
 	{
 		perror("NUM_BLOCKS exceeds maximum allowed amount of blocks");
+		exit(1);
+	}
+	if (BLOCK_SIZE < MIN_BLOCK_SIZE)
+	{
+		perror("BLOCK_SIZE is too small");
 		exit(1);
 	}
 	fd = open(FILENAME, O_RDWR | O_CREAT, 0666);
