@@ -12,7 +12,7 @@
 #define MAGIC_NUMBER 0xfa19283e
 #define FILENAME "./FILE_FS"
 #define BLOCK_SIZE 4096
-#define NUM_BLOCKS 100
+#define NUM_BLOCKS 400
 #define MAX_BLOCKS ((BLOCK_SIZE - 4) / 4)
 #define MAX_FILENAME_LENGTH 20
 #define MAX_REQUEST_SIZE (128 * 1024)
