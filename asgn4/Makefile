@@ -1,4 +1,4 @@
-all: compile mount
+all: compile mount benchmark
 
 compile:
 	cc hello.c -o hello `pkgconf fuse --cflags --libs`
@@ -12,8 +12,9 @@ benchmark.o: benchmark.c
 mount:
 	kldload fuse
 	mkdir newHelloFS
-	./hello -f newHelloFS
+	./hello newHelloFS
 
 clean:
 	rm hello
 	rm -rf newHelloFS
+	rm FILE_FS
