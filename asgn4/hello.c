@@ -362,6 +362,9 @@ int hello_unlink(const char *path)
 
 	fd = open(FILENAME, O_RDWR);
 
+	lseek(fd, 4, SEEK_SET);
+	read(fd, &bitmap, sizeof(bitmap));
+
 	struct metadata md;
 	for (int i = 1; i < NUM_BLOCKS; i++)
 	{
