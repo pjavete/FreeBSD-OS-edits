@@ -67,7 +67,7 @@ int main(){
 		sprintf(filename, "%s%d", file, i);
 		fd = open(filename, O_RDONLY);
 		lseek(fd, i*10, SEEK_SET);
-		read(fd, buf, i*2);
+		read(fd, buf, i+1);
 		//printf("%s\n", buf);
 		close(fd);
 	}
@@ -108,7 +108,7 @@ int main(){
 	clock_gettime(CLOCK_REALTIME, &time_now);
 	start_sec = time_now.tv_sec;
 	start_nsec = time_now.tv_nsec;
-	for(int i = 0; i < 98; i++){
+	for(int i = 0; i < 100; i++){
 		sprintf(filename, "%s%d", file, i);
 		fp = fopen(filename, "a");
 		for (int x = 0; x < (i*2)+1; x++){
@@ -133,7 +133,7 @@ int main(){
 		sprintf(filename, "%s%d", file, i);
 		fd = open(filename, O_RDONLY);
 		lseek(fd, i*10, SEEK_SET);
-		read(fd, buf, i*2);
+		read(fd, buf, i+1);
 		//printf("%s\n", buf);
 		close(fd);
 	}
