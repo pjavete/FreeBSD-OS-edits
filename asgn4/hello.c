@@ -340,6 +340,8 @@ int hello_write(const char *path, const char *buf, size_t size, off_t offset, st
 			break;
 		}
 	}
+	lseek(fd, 4, SEEK_SET);
+	write(fd, &bitmap, sizeof(bitmap));
 
 	close(fd);
 
