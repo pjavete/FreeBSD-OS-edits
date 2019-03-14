@@ -1,4 +1,4 @@
-all: compile mount benchmark
+all: compile benchmark mount 
 
 compile:
 	cc hello.c -o hello `pkgconf fuse --cflags --libs`
