@@ -140,6 +140,12 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
+static int hello_truncate(const char *path, off_t offset, struct fuse_file_info *fi)
+{
+	printf("truncate\n");
+	return 0;
+}
+
 static int hello_open(const char *path, struct fuse_file_info *fi)
 {
 	printf("open\n");
@@ -437,6 +443,7 @@ int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 static struct fuse_operations hello_oper = {
 	.getattr = hello_getattr,
 	.readdir = hello_readdir,
+	.truncate = hello_truncate,
 	.open = hello_open,
 	.read = hello_read,
 	.unlink = hello_unlink,
