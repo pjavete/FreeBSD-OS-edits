@@ -158,7 +158,7 @@ static int hello_truncate(const char *path, off_t size)
 				file_size = md.file_size;
 				md.file_size = size;
 				clock_gettime(CLOCK_REALTIME, &md.access_time);
-				clock_gettime(CLOCk_REALTIME, &md.modify_time);
+				clock_gettime(CLOCK_REALTIME, &md.modify_time);
 				lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
 				write(fd, &md, sizeof(struct metadata));
 				break;
@@ -241,7 +241,7 @@ static int hello_truncate(const char *path, off_t size)
 	write(fd, &bitmap, sizeof(bitmap));
 
 	close(fd);
-	return 0
+	return 0;
 }
 
 static int hello_open(const char *path, struct fuse_file_info *fi)
