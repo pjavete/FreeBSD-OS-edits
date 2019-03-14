@@ -75,8 +75,6 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	}
 	else if (file_found == 1)
 	{
-		stbuf->st_mode = S_IFREG | 0444;
-		stbuf->st_nlink = 1;
 		stbuf->st_birthtim = md.create_time; //creation time
 		stbuf->st_atim = md.access_time;	//access time
 		stbuf->st_mtim = md.modify_time;	//modification time	
@@ -303,7 +301,6 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 			break;
 		}
 	}
-	printf("buffer = %s\n", buffer);
 	if (offset < file_size)
 	{
 		if (offset + size > file_size)
@@ -312,7 +309,6 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	}
 	else
 		size = 0;
-	printf("buf = %s\n", buf);
 	lseek(fd, file_start * BLOCK_SIZE, SEEK_SET);
 	read(fd, &md, sizeof(struct metadata));
 	clock_gettime(CLOCK_REALTIME, &md.access_time);
